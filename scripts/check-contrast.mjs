@@ -35,6 +35,7 @@ const PAIRS = [
   ['ink', 'surface', 4.5, 'drawer text, buttons'],
   ['ink', 'sunk', 4.5, 'inputs, kbd, banner'],
   ['muted', 'surface', 4.5, 'hints, unselected choices'],
+  ['muted', 'bg', 4.5, 'the labels on the dock'],
   ['brand', 'surface', 4.5, 'links'],
   ['brand-ink', 'brand', 4.5, 'primary button, the plan block playing'],
   ['ink', 'pick', 4.5, 'chosen sets, groups and minutes'],

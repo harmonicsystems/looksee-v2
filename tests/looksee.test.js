@@ -18,7 +18,7 @@ import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
 import { PLAYLISTS, MUSIC_DIR, VOLUMES, duckLevel } from '../src/music.js'
 import { lessons, dockApps } from '../src/dock.js'
-import { PIC_DIR, ICON_PICS, icons } from '../src/pics.js'
+import { PIC_DIR, ICON_PICS, LINES, icons } from '../src/pics.js'
 import { NAMES as PIC_NAMES } from '../src/pics.names.js'
 import { createHash } from 'node:crypto'
 import * as SEA from '../src/aquarium/scene.js'
@@ -1234,8 +1234,20 @@ describe("Looksee's own pictures", () => {
     expect(LETTERS.every((x) => x.pic)).toBe(true)
   })
   it('draws an icon as its picture where there is one, and leaves the rest as emoji', () => {
-    expect(icons('🚌👋')).toEqual([['🚌', 'bus'], ['👋', 'wave']])
-    expect(icons('☀️🔢')).toEqual([['☀️', 'sun'], ['🔢', undefined]])
+    expect(icons('🚌👋')).toEqual([['🚌', 'bus', 'bus'], ['👋', 'wave', 'hand']])
+    expect(icons('☀️🔢')).toEqual([['☀️', 'sun', 'sun'], ['🔢', undefined, '123']])
+    expect(icons('🦖')).toEqual([['🦖', undefined, undefined]])
     expect(icons('')).toEqual([])
+  })
+
+  it('has a line icon in ui.svg for everything the dock and the bar name', () => {
+    const svg = readFileSync(new URL('../public/ui.svg', import.meta.url), 'utf8')
+    const ids = [...svg.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1])
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const n of [...LINES, 'slides', 'gear', 'back', 'next', 'play', 'pause', 'skip']) expect(ids, n).toContain(n)
+    // Every group and every app on the dock has one, so no tile is an emoji.
+    const all = { ...DEFAULTS, weather: true, music: true }
+    for (const g of GROUPS) expect(icons(g.emoji)[0][2], g.label).toBeTruthy()
+    for (const [, e, name] of dockApps(all, true)) expect(icons(e)[0][2], name).toBeTruthy()
   })
 })

@@ -775,3 +775,11 @@ bowl; "help" is Ana raising her hand; "jacket" is the fleece jacket and "hat" th
 proud, Animals is the dog, Music is the xylophone; the four friends ("team") is a card with a
 cream background, like quesadilla and zoo.
 
+## The plain look with line icons (2026-11-21, not committed when written)
+
+The controls were restyled after the first dock mockup: grey dock with labels, outlined buttons,
+line icons from `public/ui.svg`. Seen in the preview at 1366 × 768 (her link and the default),
+with the dark controls, on the Night theme and at phone width. Not checked: Watch, the weather,
+the aquarium and the timer sheet with the new palette, a Tab-only pass, and a real projector.
+The dock no longer clips a tile with two icons (it shows the first).
+

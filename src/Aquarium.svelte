@@ -81,8 +81,18 @@
     let raf = 0
     let stage
     let gone = false
+    // The canvas runs on under the dock (--under), so the dock's glass has the
+    // real sea behind it. The scene itself is fitted to the part in view: what
+    // lies under the dock is the sea beyond the scene's left edge.
     const fit = () => {
-      stage?.resize(canvas.clientWidth, canvas.clientHeight)
+      if (!stage) return
+      stage.resize(canvas.clientWidth, canvas.clientHeight)
+      const u = (parseFloat(getComputedStyle(canvas).getPropertyValue('--under')) || 0) * (canvas.width / canvas.clientWidth)
+      const W = canvas.width - u
+      stage.sw = Math.min(W, canvas.height * S.A)
+      stage.sh = stage.sw / S.A
+      stage.ox = u + (W - stage.sw) / 2
+      stage.oy = (canvas.height - stage.sh) / 2
       dirty = true
     }
     const ro = new ResizeObserver(fit)
@@ -152,9 +162,9 @@
 </section>
 
 <style>
-  .sea { position: absolute; z-index: 2; inset: var(--bar-h) var(--inset-r) var(--inset-b) var(--inset-l); background: var(--stage-bg); }
+  .sea { position: absolute; z-index: 2; inset: var(--bar-h) var(--inset-r) var(--inset-b) calc(var(--inset-l) - var(--under)); background: var(--stage-bg); }
   canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
-  .card, .opts { position: absolute; left: 50%; translate: -50%; max-width: 92%; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; font-family: var(--font); }
+  .card, .opts { position: absolute; left: calc(50% + var(--under) / 2); translate: -50%; max-width: calc(92% - var(--under)); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; font-family: var(--font); }
   .card { top: 16px; padding: 10px 22px; display: grid; gap: 2px; font-size: clamp(18px, 2.6vw, 34px); font-weight: 700; text-align: center; cursor: pointer; }
   .card b { color: var(--brand); }
   .opts { bottom: 84px; padding: 12px; display: grid; gap: 8px; }
@@ -162,7 +172,7 @@
   .row span { min-width: 6em; font-weight: 700; }
   .row .btn { min-height: 44px; min-width: 44px; }
   .row [aria-pressed='true'] { outline: 3px solid var(--brand); outline-offset: 2px; }
-  .bar { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .bar { position: absolute; left: var(--under); right: 0; bottom: 18px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
   .bar .btn { min-height: 52px; padding-inline: 20px; font-size: 17px; }
   :global(.look.quiet) .bar:not(:has(:focus-visible)) { opacity: 0; pointer-events: none; }
 </style>

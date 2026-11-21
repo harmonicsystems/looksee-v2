@@ -1,40 +1,42 @@
 /* Looksee: the colors and base styles of the controls and the settings drawer.
    Harmonic Systems low-stimulation design: muted palette, plain CSS custom
    properties, no framework. (The stage has its own themes, in settings.js.)
+   Simple on purpose: neutral greys, white outlined buttons, one blue for
+   what is chosen, and line icons in the text's own colour (public/ui.svg).
    Every color pair the controls render is checked for WCAG AA by
    scripts/check-contrast.mjs, which gates `npm run build`. Both palettes below
    are parsed by that script: keep each as a flat list of `--name: #rrggbb;`. */
 
 /* @palette light */
 :root {
-  --bg: #eef3f4;
+  --bg: #f2f2f0;
   --surface: #ffffff;
-  --sunk: #e2eaec;
-  --ink: #10242b;
-  --muted: #4f656d;
-  --line: #c9d6da;
-  --brand: #0d6a70;
+  --sunk: #e9e9e6;
+  --ink: #1a1a1a;
+  --muted: #5a5a5a;
+  --line: #cfcfcc;
+  --brand: #2b62c4;
   --brand-ink: #ffffff;
-  --pick: #d6ecec;
+  --pick: #dde8fb;
   --focus: #f2b705;
-  --focus-edge: #10242b;
+  --focus-edge: #1a1a1a;
   --bad: #a03a29;
 }
 
 /* @palette dark */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d181c;
-    --surface: #15242a;
-    --sunk: #0a1316;
-    --ink: #e4eef0;
-    --muted: #9db2b9;
-    --line: #2b3f46;
-    --brand: #46b0b6;
-    --brand-ink: #06191b;
-    --pick: #173a3e;
+    --bg: #161616;
+    --surface: #222222;
+    --sunk: #121212;
+    --ink: #ececec;
+    --muted: #a8a8a8;
+    --line: #3d3d3d;
+    --brand: #7fb0f5;
+    --brand-ink: #0b1a30;
+    --pick: #1e3355;
     --focus: #ffc933;
-    --focus-edge: #0d181c;
+    --focus-edge: #161616;
     --bad: #ec7a64;
   }
 }
@@ -71,7 +73,9 @@ h1, h2, h3 { text-wrap: balance; }
 .mono { font-family: var(--mono); }
 kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--sunk); color: var(--ink); }
 
-.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; color: var(--ink); }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 10px; cursor: pointer; color: var(--ink); }
+/* A line icon: drawn in the colour of the words beside it. */
+.ic { width: 1.25em; height: 1.25em; flex: none; vertical-align: -0.25em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .btn.small { padding: 3px 9px; font-size: 14px; }
 .btn.primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
 .btn:disabled { opacity: 0.55; cursor: default; }

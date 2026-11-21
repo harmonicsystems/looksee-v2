@@ -396,6 +396,34 @@ A teacher asked to "program different sets throughout the day in 5 to 25 minute 
   bookmark is named after its groups in the order they play and its length: "🔤➕😊 Plan, 30 min · EN".
 - Where the plan is (block, minutes played) is not saved: a reload starts at block 1.
 
+## The look: simple, with line icons
+
+David tried a "macOS and construction paper" look on 2026-11-21 and chose the plain one from the
+first dock mockup instead ("simple is better"). **Keep the controls plain:** neutral greys, white
+outlined buttons with regular-weight words, one blue for what is chosen, no shadows or textures.
+
+- **Line icons, one colour, in `public/ui.svg`** (39 symbols drawn for Looksee, no licence to
+  credit), used as `<use href="ui.svg#name">` and drawn in the colour of the words beside them
+  (`.ic` in `styles.css`; `ic(name)` in `App.svelte`). They cost no JavaScript beyond their names.
+- **The dock, the school-day bar, the control bar and the group buttons in Settings draw an emoji
+  as its line icon** (`L` in `pics.js`, third thing in each entry of `icons(text)`; `li(text, max)`
+  in `App.svelte`): line icon, else Looksee's picture, else the emoji. A dock tile shows only the
+  first icon of a part, so a tile is never wider than its column. **Slides, the choosers' big
+  tiles, Watch words and the weather keep the coloured pictures** (`em`).
+- **The dock never hides** (David, 2026-11-21): it is frosted glass (`--bg` at 60% over a blur, so
+  it takes a little of the stage's colour; its labels are in the ink for that reason), and while the slides play it thins to 22% and still
+  takes clicks; pointing at it or tabbing into it brings it back. Only the control bar fades away.
+  The dock has its own column, so only the stage's colour is ever behind it; the aquarium's
+  canvas runs on under the dock (`--under`, 0 while Settings is open on the left) and `fit()` in
+  `Aquarium.svelte` fits the scene to the part in view, so what is under the dock is the real sea
+  beyond the scene's left edge. (A stretched copy of the edge was tried first and looked wrong.)
+- The dock is a grey strip (`--bg`) with small labels: "Today" (or "Plan", or "Lessons") and
+  "Apps"; Settings sits at its bottom. Play is outlined like Back and Next. The slide count is
+  plain words in the stage's ink.
+- A test checks every name has a symbol and every group and app has a line icon. To add one: a
+  `<symbol>` in `ui.svg` (24 by 24, strokes only) and its emoji and name in `L`.
+- Settings' list of parts ("9:14 🚶 · 🏫 Lining up") is still text with emoji.
+
 ## The dock: one thing on the stage, switched in one click
 
 David's idea (2026-11-20): Looksee as a small desktop. **One thing is on the stage at a time**
@@ -419,8 +447,8 @@ there. The dock replaced Tools and every "Back to slides" button.
   Esc: timer sheet, a chooser, back to the slides, Settings, pause.
 - **Layout:** two columns of 50 px tiles, 124 px wide (`--dock-w`), added to `--inset-l`, which
   everything already positions from, so nothing jumps or is covered. Settings opens beside it. Her
-  ten parts and eight more tiles fit 768 px exactly (718 of 718): one more tile scrolls. It fades
-  with the bar (`.look.quiet`), now also during a video or the aquarium. Below 760 px it is a row
+  ten parts and eight more tiles fit 768 px exactly (718 of 718): one more tile scrolls. It thins
+  to frosted glass while playing (`.look.quiet`; see "The look"), also during a video or the aquarium. Below 760 px it is a row
   under the day bar that scrolls sideways.
 - Not built: lessons a teacher pins herself, a part of the day that opens a video or the aquarium.
 

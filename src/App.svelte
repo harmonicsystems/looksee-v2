@@ -726,6 +726,9 @@
 
 <!-- An emoji, or a string of them, drawn as Looksee's own pictures where there are some
      (pics.js); `pic` names one outright. A picture that can't load shows its emoji (alt). -->
+{#snippet ic(n)}<svg class="ic" aria-hidden="true"><use href="ui.svg#{n}" /></svg>{/snippet}
+<!-- Emoji as line icons where there is one (then its picture, then the emoji itself): at most `max` of them. -->
+{#snippet li(text, max)}{#each icons(text).slice(0, max) as [g, p, l]}{#if l}{@render ic(l)}{:else if p}<img class="em" src={picSrc(p)} alt={g} />{:else}{g}{/if}{/each}{/snippet}
 {#snippet em(text, pic)}{#if pic}<img class="em" src={picSrc(pic)} alt={text} />{:else}{#each icons(text) as [g, p]}{#if p}<img class="em" src={picSrc(p)} alt={g} />{:else}{g}{/if}{/each}{/if}{/snippet}
 
 <div
@@ -741,7 +744,7 @@
       {#each parts as p}
         <div class="part {p.state}" style="flex-grow:{p.minutes}">
           {#if p.state === 'now'}<i style="width:{p.frac * 100}%"></i>{/if}
-          <span>{@render em(p.icon)}</span>
+          <span>{@render li(p.icon)}</span>
         </div>
       {/each}
     </div>
@@ -882,15 +885,15 @@
     {:else if watching}
       <button class="btn big" onclick={() => (s.videoMuted = !s.videoMuted)} aria-pressed={s.videoMuted}>{s.videoMuted ? 'Sound on' : 'Sound off'}</button>
       <button class="btn big" onclick={() => (picking = true)} aria-haspopup="dialog">Other video</button>
-      <button class="btn big" onclick={skipAd} aria-pressed={unlocked}><span aria-hidden="true">⏭️</span> Skip ad</button>
+      <button class="btn big" onclick={skipAd} aria-pressed={unlocked}>{@render ic('skip')} Skip ad</button>
     {:else if !aqua}
-    <button class="btn" onclick={() => step(-1)} disabled={!deck.length}>Back</button>
-    <button class="btn primary play" onclick={toggle} disabled={!deck.length}>{playing ? 'Pause' : 'Play'}</button>
-    <button class="btn" onclick={() => step(1)} disabled={!deck.length}>Next</button>
+    <button class="btn" onclick={() => step(-1)} disabled={!deck.length}>{@render ic('back')} Back</button>
+    <button class="btn play" onclick={toggle} disabled={!deck.length}>{@render ic(playing ? 'pause' : 'play')} {playing ? 'Pause' : 'Play'}</button>
+    <button class="btn" onclick={() => step(1)} disabled={!deck.length}>{@render ic('next')} Next</button>
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
     {#if block && !lesson}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
-    {#if part}<span class="count mono">{part.icon} until {clock12(partEnd(s.day, s.dayEnd, s.day.indexOf(part)))}</span>{/if}
-    {#if pipOn}<button class="btn" onclick={skipAd} aria-pressed={unlocked}><span aria-hidden="true">⏭️</span> Skip ad</button>{/if}
+    {#if part}<span class="count mono">{@render li(part.icon, 1)} until {clock12(partEnd(s.day, s.dayEnd, s.day.indexOf(part)))}</span>{/if}
+    {#if pipOn}<button class="btn" onclick={skipAd} aria-pressed={unlocked}>{@render ic('skip')} Skip ad</button>{/if}
     {/if}
   </nav>
 
@@ -898,17 +901,22 @@
 
   <!-- The dock: the slides, the lessons, then the apps and widgets, then Settings. -->
   <nav class="dock" aria-label="Dock">
-    <button class="btn wide" aria-pressed={!app && !held && !lesson} onclick={goHome}>Slides</button>
-    {#each dockLessons as l (l.kind + l.i)}
-      <button class="btn" class:now={l.kind === 'part' && s.day[l.i] === partNow} aria-pressed={lessonOn(l)} aria-label={l.label} title={l.label} onclick={() => goLesson(l)}>{@render em(l.icon)}</button>
-    {/each}
-    <hr />
-    {#each dockApps(s, vid) as [id, icon, name] (id)}
-      <button class="btn" id="dk-{id}" aria-pressed={dockOn(id)} aria-label={name} title={name} onclick={DOCK[id]}>
-        {@render em(icon)}{#if id === 'timer' && timerText}<small class="mono">{timerText}</small>{/if}
-      </button>
-    {/each}
-    <button class="btn wide" aria-pressed={drawer} onclick={() => (drawer = !drawer)}>Settings</button>
+    <button class="btn wide" aria-pressed={!app && !held && !lesson} onclick={goHome}>{@render ic('slides')} Slides</button>
+    <span class="lbl">{s.daySets ? 'Today' : dockLessons[0]?.kind === 'block' ? 'Plan' : 'Lessons'}</span>
+    <div class="dk">
+      {#each dockLessons as l (l.kind + l.i)}
+        <button class="btn" class:now={l.kind === 'part' && s.day[l.i] === partNow} aria-pressed={lessonOn(l)} aria-label={l.label} title={l.label} onclick={() => goLesson(l)}>{@render li(l.icon, 1)}</button>
+      {/each}
+    </div>
+    <span class="lbl">Apps</span>
+    <div class="dk">
+      {#each dockApps(s, vid) as [id, icon, name] (id)}
+        <button class="btn" id="dk-{id}" aria-pressed={dockOn(id)} aria-label={name} title={name} onclick={DOCK[id]}>
+          {@render li(icon, 1)}{#if id === 'timer' && timerText}<small class="mono">{timerText}</small>{/if}
+        </button>
+      {/each}
+    </div>
+    <button class="btn wide last" aria-pressed={drawer} onclick={() => (drawer = !drawer)}>{@render ic('gear')} Settings</button>
   </nav>
 
   <Timer bind:open={timerOpen} bind:status={timerStatus} bind:text={timerText} anchor={timerBtn} onLeft={s.corner === 'tr'} {reduced} color={theme.colors[3]} />
@@ -979,7 +987,7 @@
                 class="btn grp-head"
                 aria-pressed={on === g.sets.length ? 'true' : on ? 'mixed' : 'false'}
                 onclick={() => toggleGroup(g, on === g.sets.length)}
-              ><span aria-hidden="true">{@render em(g.emoji)}</span> {g.label}</button>
+              ><span aria-hidden="true">{@render li(g.emoji, 1)}</span> {g.label}</button>
               {#if single && g.sets.length > 1}
                 <div class="seg">
                   {#each g.sets as id}
@@ -1207,12 +1215,12 @@
 </div>
 
 <style>
-  .look { position: fixed; inset: 0; overflow: hidden; --dock-w: 124px; --day-h: 0px; --inset-l: var(--dock-w); --inset-r: 0px; --inset-b: 0px; --drawer-w: min(380px, 100vw); --bar-h: var(--day-h); color: var(--stage-ink); background: var(--stage-bg); }
+  .look { position: fixed; inset: 0; overflow: hidden; --dock-w: 124px; --under: var(--dock-w); --day-h: 0px; --inset-l: var(--dock-w); --inset-r: 0px; --inset-b: 0px; --drawer-w: min(380px, 100vw); --bar-h: var(--day-h); color: var(--stage-ink); background: var(--stage-bg); }
   .look.bg-glow { background: radial-gradient(circle at 50% 42%, var(--stage-bg2), var(--stage-bg) 70%); }
   .look.bg-dots { background: radial-gradient(var(--stage-dot) 3px, transparent 3.5px) 0 0 / 34px 34px var(--stage-bg); }
   /* Settings takes one side of the screen and everything else moves over. */
   .look.drawer { --inset-r: var(--drawer-w); }
-  .look.drawer.side-left { --inset-r: 0px; --inset-l: calc(var(--dock-w) + var(--drawer-w)); }
+  .look.drawer.side-left { --under: 0px; --inset-r: 0px; --inset-l: calc(var(--dock-w) + var(--drawer-w)); }
   .look.has-day { --day-h: 50px; }
   .look.quiet { cursor: none; }
 
@@ -1223,7 +1231,7 @@
   .part.past { background: color-mix(in srgb, var(--stage-ink) 24%, transparent); }
   .part.past span { opacity: 0.5; }
   .part i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--stage-ink) 24%, transparent); border-right: 3px solid var(--stage-ink); }
-  .part span { position: relative; }
+  .part span { position: relative; display: flex; gap: 4px; }
 
   .scene { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 70px) var(--inset-l); container-type: size; display: grid; place-items: center; outline: none; cursor: pointer; }
   .look.quiet .scene { cursor: none; }
@@ -1261,9 +1269,13 @@
   .ctl > * { pointer-events: auto; }
   .ctl .btn { min-height: 52px; padding-inline: 16px; }
   .ctl .play { min-width: 6.5em; }
-  .count { font-size: 13px; padding: 4px 8px; border-radius: 6px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
-  .look.quiet :is(.ctl, .dock):not(:has(:focus-visible)) { opacity: 0; }
-  .look.quiet :is(.ctl, .dock):not(:has(:focus-visible)) > * { pointer-events: none; }
+  /* Plain words on the stage, in the stage's own ink. */
+  .count { font: 15px var(--font); font-variant-numeric: tabular-nums; padding: 4px 6px; color: var(--stage-ink); }
+  .look.quiet .ctl:not(:has(:focus-visible)) { opacity: 0; }
+  .look.quiet .ctl:not(:has(:focus-visible)) > * { pointer-events: none; }
+  /* The dock never goes away: while the slides play it thins to frosted glass
+     and still takes clicks, so a lesson or an app is always one click off. */
+  .look.quiet .dock:not(:hover, :has(:focus-visible)) { opacity: 0.22; }
 
   .pip { position: absolute; display: none; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; border: 3px solid var(--stage-ink); box-shadow: 0 6px 24px rgb(0 0 0 / 0.25); max-width: calc(100vw - var(--inset-r) - var(--inset-l) - 32px); }
   .pip.on { display: block; }
@@ -1327,17 +1339,18 @@
   .tile[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .vol { margin-top: 16px; padding: 4px 16px 12px; border-radius: 12px; background: var(--surface); color: var(--ink); }
   .ctl .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
-  /* The dock is at the left, where a projector's mouse usually is. */
-  .dock { position: absolute; z-index: 3; left: 0; top: var(--day-h); bottom: 0; width: var(--dock-w); padding: 8px; display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 6px; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); }
-  .dock .btn { position: relative; min-height: 50px; padding: 2px; font-size: 22px; line-height: 1.1; }
-  .dock .wide { grid-column: 1 / -1; font-size: 15px; }
-  .dock .btn { white-space: nowrap; }
-  .dock .em { height: 1em; max-width: 1em; vertical-align: -0.15em; }
-  .dock .btn:has(.em:only-child) .em { height: 1.5em; max-width: 1.7em; }
-  .dock .wide:last-child { margin-top: 6px; }
-  .dock hr { grid-column: 1 / -1; width: 100%; margin: 2px 0; border: 0; border-top: 1px solid var(--line); }
+  /* The dock is at the left, where a projector's mouse usually is: a quiet
+     grey strip of white tiles, one line icon each, under small labels. */
+  .dock { position: absolute; z-index: 3; left: 0; top: var(--day-h); bottom: 0; width: var(--dock-w); padding: 8px; display: flex; flex-direction: column; gap: 6px; overflow: auto; background: color-mix(in srgb, var(--bg) 60%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--ink); border-right: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+  .dk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .dock .btn { position: relative; flex: none; min-height: 46px; padding: 2px; overflow: hidden; font-size: 22px; line-height: 1.1; white-space: nowrap; }
+  .dock .wide { font-size: 16px; }
+  .dock .last { margin-top: auto; }
+  .dock .em { height: 1.4em; max-width: 1.6em; vertical-align: -0.3em; }
+  /* In the ink, not the muted grey: the glass under them takes the stage's colour. */
+  .lbl { margin-top: 4px; font-size: 13px; line-height: 1; }
   .dock small { display: block; font-size: 12px; }
-  .dock [aria-pressed='true'] { background: var(--pick); border: 2px solid var(--brand); }
+  .dock [aria-pressed='true'] { background: var(--pick); border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
   .dock .now::after { content: ''; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
 
   .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
@@ -1406,12 +1419,13 @@
   /* Narrow screens: the drawer becomes a bottom sheet so the stage stays visible. */
   @media (max-width: 760px) {
     .look { --dock-w: 0px; --bar-h: calc(var(--day-h) + 62px); }
-    .look.drawer, .look.drawer.side-left { --inset-r: 0px; --inset-l: 0px; --inset-b: 58vh; }
-    .dock { right: 0; bottom: auto; width: auto; height: 62px; padding: 6px; display: flex; border-right: 0; border-bottom: 1px solid var(--line); }
-    .dock .btn { flex: none; min-width: 50px; }
+    .look.drawer, .look.drawer.side-left { --under: 0px; --inset-r: 0px; --inset-l: 0px; --inset-b: 58vh; }
+    .dock { right: 0; bottom: auto; width: auto; height: 62px; padding: 6px; flex-direction: row; border-right: 0; border-bottom: 1px solid var(--line); }
+    .dk { display: contents; }
+    .dock .btn { min-width: 50px; }
     .dock .wide { padding-inline: 10px; }
-    .dock .wide:last-child { margin-top: 0; }
-    .dock hr { display: none; }
+    .dock .last { margin-top: 0; }
+    .lbl { display: none; }
     .scene { bottom: calc(var(--inset-b) + 124px); }
     .ctl { gap: 6px; }
     .ctl .btn { padding-inline: 11px; font-size: 15px; }
