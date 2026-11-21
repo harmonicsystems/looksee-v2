@@ -44,7 +44,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 84 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 82.1 KB now, 1.9 KB under: 59.6 at start, 9.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
+  (`scripts/check-bundle-size.mjs`; 82.5 KB now, 1.5 KB under: 59.6 at start, 9.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -447,8 +447,8 @@ check first and copies nothing if it fails. It changes two things: picture names
 ## Looksee's own pictures, in place of emoji
 
 David asked (2026-11-20) for emoji to become pictures from his picture library
-(`~/Code/picture-library`: his own, made with Codex, free to publish). 107 are in `public/pic/` as
-512 px AVIF (0.9 MB, stored for offline use), copied by `npm run icons` (`scripts/icons.mjs`, which
+(`~/Code/picture-library`: his own, made with Codex, free to publish). 120 are in `public/pic/` as
+512 px AVIF (1 MB, stored for offline use), copied by `npm run icons` (`scripts/icons.mjs`, which
 lists each picture's name and where it is in the library). **An emoji with no picture yet stays an
 emoji**; the list of those is in `docs/STATUS.md`. Feelings, Gestures and Body were left as they are.
 

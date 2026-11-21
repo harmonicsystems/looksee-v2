@@ -23,15 +23,15 @@ export const VIDEOS = [
     words: [
       w('Paw Patrol', 'Paw Patrol', '', '🐾'),
       w('dog', 'perro', 'el', '🐶', 'dog'),
-      w('pup', 'cachorro', 'el', '🐕'),
+      w('pup', 'cachorro', 'el', '🐕', 'puppy'),
       w('penguin', 'pingüino', 'el', '🐧', 'penguin'),
       w('help', 'ayuda', 'la', '🆘', 'help'),
       w('rescue', 'rescate', 'el', '🚒', 'fire-engine'),
-      w('team', 'equipo', 'el', '🤝'),
+      w('team', 'equipo', 'el', '🤝', 'friends'),
       w('snow', 'nieve', 'la', '❄️', 'snowflake'),
       w('ice', 'hielo', 'el', '🧊', 'icicles'),
       w('cold', 'frío', '', '🥶', 'shiver'),
-      w('slide', 'deslizarse', '', '🛝')
+      w('slide', 'deslizarse', '', '🛝', 'slide')
     ]
   }
 ]

@@ -41,13 +41,13 @@ wait,espera,,⏳,wait
 quiet hands,manos quietas,,✋
 eyes forward,ojos al frente,,👀,eyes-forward
 follow,sigue,,👣,follow
-door,puerta,la,🚪
+door,puerta,la,🚪,door
 first,primero,,🥇,first
 last,último,,🏁,last`),
   core: set(`I,yo,,🧒,me
 want,quiero,,🤲,want
 more,más,,➕,more
-go,vamos,,🟢
+go,vamos,,🟢,go
 stop,alto,,🛑,stop
 like,me gusta,,👍,like
 help,ayuda,,🙋,help

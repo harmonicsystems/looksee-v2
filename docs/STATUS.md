@@ -754,18 +754,24 @@ preview at 1366 × 768: an Our day word, a letter word, the day bar, the dock an
 draw as pictures, none broken. Not checked: Watch's words with a real video, the Night and High
 contrast themes, a phone, the built site.
 
-**Still emoji, because the library has no picture yet** (David decides what to make):
+**Later the same day:** one sheet of nine was made in the library (`props/more/P7-looksee-icons`:
+door, playground slide, television, thermometer, music box, abacus, sun and cloud, fog, drizzle;
+13k tokens), and four more of its pictures were put to use (go, the puppy, the four friends, Ana
+proud). 120 pictures now, 82.5 KB of 84.
 
-- Our day words (4): quiet hands, door, go, number.
-- Words around the Paw Patrol video (4): Paw Patrol, pup, team, slide.
-- Weather (3): partly cloudy, foggy, drizzly.
-- Dock, lesson groups (6): Letters & Numbers, Count to 100, Math, Opposites, Feelings & Body, Animals.
-- Dock, apps (5): Videos, Weather, Music, Corner video, Full screen. (Timer uses the clock.)
-- Music playlists (1): Nursery tunes.
-- In the teacher's day bar (2): 🎵 and 🔢. Any other emoji typed into a schedule stays an emoji
-  unless `pics.js` names a picture for it.
+**Still emoji** (9):
+
+- Our day words: quiet hands, number.
+- Dock: Letters & Numbers, Count to 100, Opposites, Corner video, Full screen.
+- In the teacher's day bar: 🔢.
+- "Paw Patrol" around its video shows the dog picture (a brand's mark is never drawn).
+
+Most of these would need a letter, a number or a symbol in the picture, which the library's rules
+do not allow. David decides whether to make an exception or pick a thing to stand for each.
 
 **To look at again:** the cast pictures (wave, walk) are small standing figures at dock and
 day-bar size; "more" in Math words uses Ana's blocks picture and "more" in Core words uses Jo's
-bowl; "help" is Ana raising her hand; "jacket" is the fleece jacket and "hat" the cap.
+bowl; "help" is Ana raising her hand; "jacket" is the fleece jacket and "hat" the cap; Math is the abacus, Feelings & Body is Ana
+proud, Animals is the dog, Music is the xylophone; the four friends ("team") is a card with a
+cream background, like quesadilla and zoo.
 

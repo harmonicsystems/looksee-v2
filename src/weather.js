@@ -32,10 +32,10 @@ export const tempBand = (f) => TEMPS.reduce((b, t, i) => (f >= t.from ? i : b), 
 // the codes up to and including `to`.
 const SKIES = [
   { to: 0, emoji: '☀️', label: 'sunny', pic: 'sun', es: 'soleado' },
-  { to: 2, emoji: '⛅', label: 'partly cloudy', es: 'algo nublado' },
+  { to: 2, emoji: '⛅', label: 'partly cloudy', pic: 'sun-and-cloud', es: 'algo nublado' },
   { to: 3, emoji: '☁️', label: 'cloudy', pic: 'cloud', es: 'nublado' },
-  { to: 48, emoji: '🌫️', label: 'foggy', es: 'con niebla' },
-  { to: 57, emoji: '🌦️', label: 'drizzly', es: 'con llovizna' },
+  { to: 48, emoji: '🌫️', label: 'foggy', pic: 'fog', es: 'con niebla' },
+  { to: 57, emoji: '🌦️', label: 'drizzly', pic: 'drizzle', es: 'con llovizna' },
   { to: 67, emoji: '🌧️', label: 'rainy', pic: 'raindrop', es: 'lluvioso' },
   { to: 77, emoji: '🌨️', label: 'snowy', pic: 'snowflake', es: 'con nieve' },
   { to: 82, emoji: '🌧️', label: 'rainy', pic: 'raindrop', es: 'lluvioso' },

@@ -43,7 +43,11 @@ const FROM = Object.fromEntries([
   // words around videos, the bar and the dock
   ['dog', 'props/animals/dog'], ['fire-engine', 'props/vehicles/fire-engine'], ['icicles', 'props/winter/icicles'], ['shiver', 'cast/ana/needs/cold'],
   ['clownfish', 'props/sea/clownfish'], ['plate', 'props/home/plate'], ['puzzle', 'props/toys/puzzle-piece'], ['school', 'props/town/school'],
-  ['teddy', 'props/toys/teddy-bear'], ['earth', 'props/space/earth'], ['clock', 'props/home/clock']
+  ['teddy', 'props/toys/teddy-bear'], ['earth', 'props/space/earth'], ['clock', 'props/home/clock'],
+  // made for Looksee on 2026-11-20 (props/more/P7-looksee-icons), and more of what was there
+  ['door', 'props/classroom/door'], ['slide', 'props/toys/playground-slide'], ['television', 'props/home/television'], ['thermometer', 'props/care/thermometer'],
+  ['music-box', 'props/music/music-box'], ['abacus', 'props/toys/abacus'], ...p('props/nature/', 'sun-and-cloud fog drizzle'),
+  ['go', 'projects/steps/line-up/go'], ['puppy', 'cast/puppy/poses/happy'], ['friends', 'projects/cast-pictures/cards/four-friends'], ['proud', 'cast/ana/poses/proud']
 ])
 
 const out = join(here, 'public/pic')

@@ -10,7 +10,8 @@ export const picSrc = (name) => `${PIC_DIR}/${name}.avif`
 const BY_EMOJI = {
   '✏': 'pencil', '📚': 'book', '📖': 'book', '🍎': 'apple', '🥪': 'sandwich', '🎨': 'paints', '🚌': 'bus', '🚗': 'car',
   '🐠': 'clownfish', '👋': 'wave', '☀': 'sun', '🚶': 'walk', '🍽': 'plate', '🧩': 'puzzle', '🏫': 'school', '🧸': 'teddy',
-  '🌍': 'earth', '⏱': 'clock', '🌙': 'moon'
+  '🌍': 'earth', '⏱': 'clock', '🌙': 'moon', '📺': 'television', '🌡': 'thermometer', '🎶': 'music-box', '🎵': 'xylophone',
+  '➕': 'abacus', '😊': 'proud', '🐾': 'dog', '🚪': 'door', '🛝': 'slide'
 }
 export const ICON_PICS = Object.values(BY_EMOJI)
 
