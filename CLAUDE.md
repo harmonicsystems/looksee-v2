@@ -43,8 +43,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 72 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 71.3 KB now, 0.7 KB under. David raised it on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 84 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 82.6 KB now, 1.4 KB under: 58.6 at start, 9.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -395,6 +395,54 @@ A teacher asked to "program different sets throughout the day in 5 to 25 minute 
 - In a link: `planOn=1&plan=letters.numbers-10_feelings-5` (`planQuery`, `queryPlan`). A plan's
   bookmark is named after its groups in the order they play and its length: "🔤➕😊 Plan, 30 min · EN".
 - Where the plan is (block, minutes played) is not saved: a reload starts at block 1.
+
+## The dock: one thing on the stage, switched in one click
+
+David's idea (2026-11-20): Looksee as a small desktop. **One thing is on the stage at a time**
+(the slides, a Watch video, the weather or the aquarium); **the dock at the left** switches between
+them and between lessons, one click each; the timer, music and corner video go on over whatever is
+there. The dock replaced Tools and every "Back to slides" button.
+
+- **Top to bottom:** Slides (back to what the clock, the plan or the settings play), the lessons,
+  then 🐠 Aquarium, 📺 Videos, 🌡️ Weather (if on), ⏱️ Timer (shows the time left), 🎵 Music (if on),
+  🎬 Corner video (if Settings has a link), ⛶ Full screen, and Settings. `dock.js` (pure, tested)
+  says what the tiles are; `App.svelte` draws them and does what a click asks (`DOCK`).
+- **Lessons are never set up by hand** (`lessons(s, own)`): with Follow the school day, one per
+  part that has sets (the clock's part has a dot); with a plan, one per block; otherwise one per
+  group (the groups with no pictures only on a device that has some).
+- **A click on a part holds it** (`hold`, `partGo`) until the clock reaches the next part, so the
+  15 s clock does not pull it back. A click on a group plays it alone (`lesson`, in front of
+  `cur`) without changing `s.sets`: it is not saved and is in no link. Slides lets go of both.
+- **One state for the stage:** `app` is derived from `wx`, `watching` and `aqua`; `clear()` takes
+  everything off and pauses the slides, and every opener calls it. While something else is on the
+  stage, Space, the arrows and V do not reach the hidden slides (they did during Watch before).
+  Esc: timer sheet, a chooser, back to the slides, Settings, pause.
+- **Layout:** two columns of 50 px tiles, 124 px wide (`--dock-w`), added to `--inset-l`, which
+  everything already positions from, so nothing jumps or is covered. Settings opens beside it. Her
+  ten parts and eight more tiles fit 768 px exactly (718 of 718): one more tile scrolls. It fades
+  with the bar (`.look.quiet`), now also during a video or the aquarium. Below 760 px it is a row
+  under the day bar that scrolls sideways.
+- Not built: lessons a teacher pins herself, a part of the day that opens a video or the aquarium.
+
+## The aquarium
+
+A two-minute sea loop to ask questions from (how many clownfish, over or under, fast or slow, what
+colour). **It is made and proved in David's picture library** (`~/Code/picture-library/projects/aquarium`,
+where `check.mjs` proves every question true for its whole moment) and copied here by
+`npm run aquarium` (`scripts/aquarium.mjs`): `src/aquarium/` (never edit by hand; a test compares
+`scene.js` with the hash taken when the check passed) and 29 pictures as lossless WebP in
+`public/aquarium/` (1.7 MB, David's own, stored for offline use). The script runs the library's
+check first and copies nothing if it fails. It changes two things: picture names end `.webp`, and
+`stage.js` takes its frame sets from `frames.js` instead of a `fetch`.
+
+- `Aquarium.svelte` is its place on the stage, **loaded the first time it is opened** (the only
+  `import()` in the app). Leaving it cancels its frame loop.
+- Its bar: Freeze / Play, Next question, Show answer, and Sea (clownfish 1 to 5, the submarine's
+  colour, speed, water; kept under `looksee-aquarium-v1`, not settings, in no link). A click on
+  the sea freezes it; Space and → do the same as Freeze and Next question. The question follows
+  the Words setting, and a click on it says it. Reduced motion opens it frozen.
+- **Its check does not run in Looksee's tests** (it needs the library and ImageMagick); the hash
+  test stands in for it.
 
 ## The timer, and the control bar
 

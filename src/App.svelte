@@ -24,6 +24,7 @@
   import { canKeep, localPictures, addPictures, removePictures } from './local.js'
   import { PLACE, TEMPS, weatherLines } from './weather.js'
   import { getWeather } from './outside.js'
+  import { lessons, dockApps } from './dock.js'
 
   let { update = null } = $props()
 
@@ -67,8 +68,12 @@
   // each part the same object).
   let pp = $state(null)
   const partNow = $derived(s.daySets ? (s.day[partAt(s.day, s.dayEnd, now)] ?? null) : null)
+  // A part clicked in the dock plays until the clock reaches the next one.
+  let hold = $state.raw(null)
+  const held = $derived(hold?.when === partNow)
+  const partGo = $derived(held ? hold.part : partNow)
   $effect(() => {
-    if (!playing || !deck.length) pp = partNow
+    if (!playing || !deck.length) pp = partGo
   })
   // Before the first part, after the day and in a part with no sets, the
   // settings' own sets play.
@@ -81,12 +86,19 @@
   let blk = $state(0)
   const bi = $derived(Math.min(blk, s.plan.length - 1))
   const block = $derived(s.planOn && !s.daySets && s.plan.length ? s.plan[bi] : null)
-  const cur = $derived(part ?? block ?? s)
+  // A group clicked in the dock plays alone (`lesson`) without changing any of them.
+  let lesson = $state.raw(null)
+  $effect(() => {
+    s.daySets
+    s.planOn
+    lesson = null
+  })
+  const cur = $derived(lesson ?? part ?? block ?? s)
   // Whose sets Settings is choosing: with the school day, the part clicked
   // there (`pick`), or the settings' own for before and after the day (and
   // for a part with none); else whatever is playing.
   let pick = $state(null)
-  const ed = $derived(s.daySets ? (s.day.includes(pick) ? pick : s) : cur)
+  const ed = $derived(s.daySets ? (s.day.includes(pick) ? pick : s) : (block ?? s))
   const edSets = $derived(ed.sets ?? [])
   // Turning the school day on gives every part the sets chosen so far, to
   // change from, and turns a plan off: one or the other decides.
@@ -230,13 +242,13 @@
   function step(by) {
     if (!deck.length) return
     // A new part of the school day starts at a slide's end, from its first slide.
-    if (by > 0 && pp !== partNow) {
+    if (by > 0 && pp !== partGo) {
       const was = deckKey
-      pp = partNow
+      pp = partGo
       if (deckKey !== was) return
     }
     // A block that has had its minutes hands over to the next at a slide's end.
-    if (by > 0 && block && blockDone(block.min, played())) {
+    if (by > 0 && block && !lesson && blockDone(block.min, played())) {
       const was = bi
       const to = blockAfter(s.plan, was, s.loop)
       if (to < 0) {
@@ -263,26 +275,15 @@
     return () => clearTimeout(t)
   })
   // Keep the screen awake while the deck plays or a timer runs (awake.js).
-  $effect(() => keepAwake(playing || timerStatus === 'running' || !!tune))
+  $effect(() => keepAwake(playing || aqua || timerStatus === 'running' || !!tune))
 
-  // ---- timer and tools ----
-  // The timer is its own thing (Timer.svelte); the bar only has its button.
-  // Tools holds what is used less often: Watch, the corner video, Settings.
+  // ---- timer ----
+  // The timer is its own thing (Timer.svelte); the dock has its button.
   let timerOpen = $state(false)
   let timerStatus = $state('idle')
   let timerText = $state('')
-  let timerBtn = $state()
-  let tools = $state(false)
-  let toolsBtn = $state()
-  function toggleTimer() {
-    tools = false
-    timerOpen = !timerOpen
-  }
-  // One thing from Tools, which closes it.
-  function tool(f) {
-    tools = false
-    f()
-  }
+  const timerBtn = { focus: () => document.getElementById('dk-timer')?.focus() }
+  const toggleTimer = () => (timerOpen = !timerOpen)
 
   let stageEl = $state()
   function toggle() {
@@ -301,7 +302,7 @@
     clearTimeout(quietTimer)
     quietTimer = setTimeout(() => (quiet = true), 2500)
   }
-  const hideBar = $derived(playing && quiet && !drawer && !tools && !timerOpen)
+  const hideBar = $derived((playing || watching || aqua) && quiet && !drawer && !timerOpen)
   // Settings opens on the part of the school day the clock is in.
   $effect(() => {
     if (drawer) pick = untrack(() => partNow)
@@ -440,15 +441,10 @@
   let watchStatus = $state('')
   let lit = $state(0)
   function watch(v) {
-    playing = false
+    clear()
     stopVideo()
-    picking = false
     lit = 0
     watching = v
-  }
-  function stopWatch() {
-    watching = null
-    stageEl?.focus({ preventScroll: true })
   }
   // One player per video chosen; leaving Watch destroys it (no pause, as in the corner).
   $effect(() => {
@@ -506,7 +502,7 @@
   })
 
   // ---- background music (music.js, player.js) ----
-  // Chosen in Tools; while it plays, a button in the bar stops it. It is its
+  // Chosen in the dock, where its chooser also stops it. It is its
   // own thing, like the timer: the slides, plans and the timer never start or
   // stop it. It gives way to a video with sound, to speech and to the chime.
   let tune = $state(null)
@@ -545,22 +541,18 @@
 
   // ---- weather ----
   // The temperature outside as its own big slide, for circle time. Nothing is
-  // asked until someone opens it (Weather in Tools, or O), and the button
+  // asked until someone opens it (Weather in the dock, or O), and the button
   // is there only when the Weather setting is on.
   let wx = $state(null)
   function showWeather() {
-    if (!s.weather || watching) return
-    playing = false
-    picking = tools = timerOpen = false
+    if (!s.weather) return
+    clear()
+    timerOpen = false
     wx = { status: 'loading' }
     getWeather().then(
       (w) => wx && (wx = { status: 'ok', ...w }),
       () => wx && (wx = { status: 'failed' })
     )
-  }
-  function stopWeather() {
-    wx = null
-    stageEl?.focus({ preventScroll: true })
   }
   $effect(() => {
     if (!s.weather) wx = null
@@ -571,6 +563,45 @@
   const wxSay = $derived(wxWords ? `${PLACE.name}: ${wx.temp}°F, ${rowsText(wxWords.temp)}, ${rowsText(wxWords.sky)}` : '')
   const speakWeather = () => wxWords && speak(weatherLines(wx, wxWords.temp.map((r) => r.lang)))
 
+  // ---- the dock (dock.js) ----
+  // One thing is on the stage at a time: the slides, or `app` (a video, the
+  // weather or the aquarium). The dock at the left switches between them and
+  // between lessons, one click each; the timer, music and corner video go on
+  // over whatever is there.
+  let aqua = $state(false)
+  let Aqua = $state.raw(null)
+  let aquaKey = $state.raw(null)
+  const app = $derived(wx ? 'weather' : watching ? 'watch' : aqua ? 'aquarium' : '')
+  // Take everything off the stage and pause the slides.
+  function clear() {
+    playing = picking = choosing = aqua = false
+    wx = watching = null
+    stageEl?.focus({ preventScroll: true })
+  }
+  // Back to the slides, as the clock, the plan or the settings have them.
+  function goHome() {
+    clear()
+    hold = lesson = null
+  }
+  const dockLessons = $derived(lessons(s, picsHave > 0))
+  const lessonOn = (l) => !app && (l.kind === 'part' ? pp === s.day[l.i] : l.kind === 'block' ? !lesson && bi === l.i : lesson?.sets === l.sets)
+  function goLesson(l) {
+    clear()
+    if (l.kind === 'part') hold = { part: (pp = s.day[l.i]), when: partNow }
+    else if (l.kind === 'block') goBlock(l.i)
+    else lesson = { sets: l.sets }
+  }
+  const DOCK = {
+    aquarium: () => (aqua ? goHome() : (clear(), (aqua = true), import('./Aquarium.svelte').then((m) => (Aqua = m.default)))),
+    watch: () => (picking = true),
+    weather: () => (wx ? goHome() : showWeather()),
+    timer: toggleTimer,
+    music: () => (choosing = true),
+    video: () => toggleVideo(),
+    full: fullscreen
+  }
+  const dockOn = (id) => ({ aquarium: aqua, watch: !!watching, weather: !!wx, timer: timerStatus !== 'idle', music: !!tune, video: pipOn })[id]
+
   // ---- keyboard ----
   function onKey(e) {
     wake()
@@ -580,13 +611,9 @@
       if (timerOpen) {
         timerOpen = false
         timerBtn?.focus()
-      } else if (tools) {
-        tools = false
-        toolsBtn?.focus()
       } else if (picking) picking = false
       else if (choosing) choosing = false
-      else if (wx) stopWeather()
-      else if (watching) stopWatch()
+      else if (app) goHome()
       else if (drawer) {
         drawer = false
         stageEl?.focus({ preventScroll: true })
@@ -596,16 +623,17 @@
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
     if ((tag === 'BUTTON' || tag === 'SUMMARY') && (e.key === ' ' || e.key === 'Enter')) return
     const k = e.key.toLowerCase()
-    if (k === 'o') wx ? stopWeather() : showWeather()
-    // The weather is on screen instead of the slides: their keys wait.
-    else if (wx && [' ', 'arrowright', 'arrowleft', 'v', 'w', 'm'].includes(k)) return
+    if (k === 'o') wx ? goHome() : showWeather()
+    // Something else is on the stage instead of the slides: their keys wait.
+    else if (app && [' ', 'arrowright', 'arrowleft', 'v'].includes(k)) aqua && aquaKey?.(k)
+    else if (wx && (k === 'w' || k === 'm')) return
     else if (k === ' ') toggle()
     else if (k === 'arrowright') step(1)
     else if (k === 'arrowleft') step(-1)
     else if (k === 's') drawer = !drawer
     else if (k === 'v') toggleVideo()
     else if (k === 'r') wx ? speakWeather() : speakSlide()
-    else if (k === 'w') watching ? stopWatch() : (picking = !picking)
+    else if (k === 'w') watching ? goHome() : (picking = !picking)
     else if (k === 'm') s.videoMuted = !s.videoMuted
     else if (k === 'b') tune ? stopMusic() : lastList ? startMusic(lastList) : s.music && (choosing = true)
     else if (k === 'f') fullscreen()
@@ -845,45 +873,38 @@
 
   <nav class="ctl" aria-label="Controls">
     {#if wx}
-      <button class="btn primary big" onclick={stopWeather}>Back to slides</button>
       {#if wx.status === 'failed'}<button class="btn big" onclick={showWeather}>Try again</button>{/if}
     {:else if watching}
-      <button class="btn primary big" onclick={stopWatch}>Back to slides</button>
       <button class="btn big" onclick={() => (s.videoMuted = !s.videoMuted)} aria-pressed={s.videoMuted}>{s.videoMuted ? 'Sound on' : 'Sound off'}</button>
       <button class="btn big" onclick={() => (picking = true)} aria-haspopup="dialog">Other video</button>
       <button class="btn big" onclick={skipAd} aria-pressed={unlocked}><span aria-hidden="true">⏭️</span> Skip ad</button>
-    {:else}
+    {:else if !aqua}
     <button class="btn" onclick={() => step(-1)} disabled={!deck.length}>Back</button>
     <button class="btn primary play" onclick={toggle} disabled={!deck.length}>{playing ? 'Pause' : 'Play'}</button>
     <button class="btn" onclick={() => step(1)} disabled={!deck.length}>Next</button>
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
-    {#if block}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
+    {#if block && !lesson}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
     {#if part}<span class="count mono">{part.icon} until {clock12(partEnd(s.day, s.dayEnd, s.day.indexOf(part)))}</span>{/if}
     {#if pipOn}<button class="btn" onclick={skipAd} aria-pressed={unlocked}><span aria-hidden="true">⏭️</span> Skip ad</button>{/if}
     {/if}
-    <button class="btn big" class:primary={timerStatus !== 'idle'} bind:this={timerBtn} onclick={toggleTimer} aria-expanded={timerOpen}>
-      <span aria-hidden="true">⏱️</span> <span class:mono={timerStatus !== 'idle' && timerStatus !== 'done'}>{timerText || 'Timer'}</span>
-    </button>
-    {#if tune}
-      <button class="btn big" onclick={stopMusic} aria-label="Stop music: {PLAYLISTS.find((p) => p.id === tune)?.label}"><span aria-hidden="true">🎵</span> Stop</button>
-    {/if}
-    {#if !watching && !wx}
-      <button class="btn big corner" bind:this={toolsBtn} onclick={() => ((timerOpen = false), (tools = !tools))} aria-expanded={tools}><span aria-hidden="true">🧰</span> Tools</button>
-    {/if}
   </nav>
 
-  <!-- Tools: what is used less often than the timer. A video with no link is not offered. -->
-  {#if tools}
-    <div class="tools" role="group" aria-label="Tools">
-      {#if s.weather}<button class="btn big" onclick={() => tool(showWeather)}><span aria-hidden="true">🌡️</span> Weather</button>{/if}
-      <button class="btn big" onclick={() => tool(() => (picking = true))} aria-haspopup="dialog"><span aria-hidden="true">📺</span> Watch</button>
-      {#if s.music}<button class="btn big" onclick={() => tool(() => (choosing = true))} aria-haspopup="dialog"><span aria-hidden="true">🎵</span> Music</button>{/if}
-      {#if vid}
-        <button class="btn big" onclick={() => tool(toggleVideo)}><span aria-hidden="true">🎬</span> {pipOn ? 'Hide video' : 'Corner video'}</button>
-      {/if}
-      <button class="btn big" onclick={() => tool(() => (drawer = !drawer))}><span aria-hidden="true">⚙️</span> {drawer ? 'Close settings' : 'Settings'}</button>
-    </div>
-  {/if}
+  {#if aqua && Aqua}<Aqua {s} {reduced} bind:key={aquaKey} />{/if}
+
+  <!-- The dock: the slides, the lessons, then the apps and widgets, then Settings. -->
+  <nav class="dock" aria-label="Dock">
+    <button class="btn wide" aria-pressed={!app && !held && !lesson} onclick={goHome}>Slides</button>
+    {#each dockLessons as l (l.kind + l.i)}
+      <button class="btn" class:now={l.kind === 'part' && s.day[l.i] === partNow} aria-pressed={lessonOn(l)} aria-label={l.label} title={l.label} onclick={() => goLesson(l)}>{l.icon}</button>
+    {/each}
+    <hr />
+    {#each dockApps(s, vid) as [id, icon, name] (id)}
+      <button class="btn" id="dk-{id}" aria-pressed={dockOn(id)} aria-label={name} title={name} onclick={DOCK[id]}>
+        {icon}{#if id === 'timer' && timerText}<small class="mono">{timerText}</small>{/if}
+      </button>
+    {/each}
+    <button class="btn wide" aria-pressed={drawer} onclick={() => (drawer = !drawer)}>Settings</button>
+  </nav>
 
   <Timer bind:open={timerOpen} bind:status={timerStatus} bind:text={timerText} anchor={timerBtn} onLeft={s.corner === 'tr'} {reduced} color={theme.colors[3]} />
 
@@ -1056,7 +1077,7 @@
 
       <details class="sec">
         <summary><h2>Weather</h2><span class="sum">{s.weather ? 'On' : 'Off'}</span></summary>
-        <label class="chk"><input type="checkbox" bind:checked={s.weather} /> Weather in Tools: the temperature in {PLACE.name}</label>
+        <label class="chk"><input type="checkbox" bind:checked={s.weather} /> Weather in the dock: the temperature in {PLACE.name}</label>
         <p class="hint">
           The temperature outside as a big slide, with a word and a color for how it feels and a picture of the sky. The
           reading comes from Open-Meteo when Weather is clicked. It is the only thing besides YouTube that this app
@@ -1068,7 +1089,7 @@
 
       <details class="sec">
         <summary><h2>Music</h2><span class="sum">{s.music ? 'On' : 'Off'}</span></summary>
-        <label class="chk"><input type="checkbox" bind:checked={s.music} /> Music in Tools: quiet tunes under the slides</label>
+        <label class="chk"><input type="checkbox" bind:checked={s.music} /> Music in the dock: quiet tunes under the slides</label>
         {#if s.music}
           <p class="hint">
             It plays until stopped, softly, and goes quiet for a video with sound, for words read aloud and for the timer's
@@ -1181,18 +1202,18 @@
 </div>
 
 <style>
-  .look { position: fixed; inset: 0; overflow: hidden; --inset-l: 0px; --inset-r: 0px; --inset-b: 0px; --drawer-w: min(380px, 100vw); --bar-h: 0px; color: var(--stage-ink); background: var(--stage-bg); }
+  .look { position: fixed; inset: 0; overflow: hidden; --dock-w: 124px; --day-h: 0px; --inset-l: var(--dock-w); --inset-r: 0px; --inset-b: 0px; --drawer-w: min(380px, 100vw); --bar-h: var(--day-h); color: var(--stage-ink); background: var(--stage-bg); }
   .look.bg-glow { background: radial-gradient(circle at 50% 42%, var(--stage-bg2), var(--stage-bg) 70%); }
   .look.bg-dots { background: radial-gradient(var(--stage-dot) 3px, transparent 3.5px) 0 0 / 34px 34px var(--stage-bg); }
   /* Settings takes one side of the screen and everything else moves over. */
   .look.drawer { --inset-r: var(--drawer-w); }
-  .look.drawer.side-left { --inset-r: 0px; --inset-l: var(--drawer-w); }
-  .look.has-day { --bar-h: 50px; }
+  .look.drawer.side-left { --inset-r: 0px; --inset-l: calc(var(--dock-w) + var(--drawer-w)); }
+  .look.has-day { --day-h: 50px; }
   .look.quiet { cursor: none; }
 
   /* School-day bar: one box per part, as wide as the part is long (never
      narrower than its pictures). Past parts are shaded; the line is now. */
-  .day { position: absolute; top: 0; left: var(--inset-l); right: var(--inset-r); height: var(--bar-h); display: flex; gap: 3px; padding: 6px 8px 4px; }
+  .day { position: absolute; top: 0; left: calc(var(--inset-l) - var(--dock-w)); right: var(--inset-r); height: var(--day-h); display: flex; gap: 3px; padding: 6px 8px 4px; }
   .part { position: relative; flex: 1 0 3em; min-width: 0; display: grid; place-items: center; overflow: hidden; border-radius: 8px; font-size: 22px; line-height: 1; white-space: nowrap; background: color-mix(in srgb, var(--stage-ink) 9%, transparent); }
   .part.past { background: color-mix(in srgb, var(--stage-ink) 24%, transparent); }
   .part.past span { opacity: 0.5; }
@@ -1235,8 +1256,8 @@
   .ctl .btn { min-height: 52px; padding-inline: 16px; }
   .ctl .play { min-width: 6.5em; }
   .count { font-size: 13px; padding: 4px 8px; border-radius: 6px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
-  .look.quiet .ctl:not(:has(:focus-visible)) { opacity: 0; }
-  .look.quiet .ctl:not(:has(:focus-visible)) > * { pointer-events: none; }
+  .look.quiet :is(.ctl, .dock):not(:has(:focus-visible)) { opacity: 0; }
+  .look.quiet :is(.ctl, .dock):not(:has(:focus-visible)) > * { pointer-events: none; }
 
   .pip { position: absolute; display: none; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; border: 3px solid var(--stage-ink); box-shadow: 0 6px 24px rgb(0 0 0 / 0.25); max-width: calc(100vw - var(--inset-r) - var(--inset-l) - 32px); }
   .pip.on { display: block; }
@@ -1299,14 +1320,19 @@
   .tile.close { min-height: 160px; font-size: 18px; }
   .tile[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .vol { margin-top: 16px; padding: 4px 16px 12px; border-radius: 12px; background: var(--surface); color: var(--ink); }
-  .ctl .big, .tools .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
-  /* Tools sits in the bottom left corner, where a projector's mouse usually is, and its panel
-     rises from there. */
-  .ctl .corner { position: absolute; left: 12px; bottom: 0; }
-  .tools { position: absolute; z-index: 3; left: calc(var(--inset-l) + 12px); right: var(--inset-r); bottom: calc(var(--inset-b) + 84px); width: max-content; max-width: calc(100vw - var(--inset-l) - var(--inset-r) - 24px); padding: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.22); }
+  .ctl .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
+  /* The dock is at the left, where a projector's mouse usually is. */
+  .dock { position: absolute; z-index: 3; left: 0; top: var(--day-h); bottom: 0; width: var(--dock-w); padding: 8px; display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 6px; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); }
+  .dock .btn { position: relative; min-height: 50px; padding: 2px; font-size: 22px; line-height: 1.1; }
+  .dock .wide { grid-column: 1 / -1; font-size: 15px; }
+  .dock .wide:last-child { margin-top: 6px; }
+  .dock hr { grid-column: 1 / -1; width: 100%; margin: 2px 0; border: 0; border-top: 1px solid var(--line); }
+  .dock small { display: block; font-size: 12px; }
+  .dock [aria-pressed='true'] { background: var(--pick); border: 2px solid var(--brand); }
+  .dock .now::after { content: ''; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
 
   .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
-  .look.side-left .drawer-panel { right: auto; left: 0; border-left: 0; border-right: 1px solid var(--line); }
+  .look.side-left .drawer-panel { right: auto; left: var(--dock-w); border-left: 0; border-right: 1px solid var(--line); }
   .drawer-panel header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
   .head-btns { display: flex; gap: 6px; }
   h1 { font-size: 20px; margin: 0; }
@@ -1370,13 +1396,17 @@
 
   /* Narrow screens: the drawer becomes a bottom sheet so the stage stays visible. */
   @media (max-width: 760px) {
+    .look { --dock-w: 0px; --bar-h: calc(var(--day-h) + 62px); }
     .look.drawer, .look.drawer.side-left { --inset-r: 0px; --inset-l: 0px; --inset-b: 58vh; }
+    .dock { right: 0; bottom: auto; width: auto; height: 62px; padding: 6px; display: flex; border-right: 0; border-bottom: 1px solid var(--line); }
+    .dock .btn { flex: none; min-width: 50px; }
+    .dock .wide { padding-inline: 10px; }
+    .dock .wide:last-child { margin-top: 0; }
+    .dock hr { display: none; }
     .scene { bottom: calc(var(--inset-b) + 124px); }
     .ctl { gap: 6px; }
     .ctl .btn { padding-inline: 11px; font-size: 15px; }
     .ctl .count { display: none; }
-    .ctl .corner { position: static; }
-    .tools { left: var(--inset-l); margin: 0 auto; bottom: calc(var(--inset-b) + 142px); }
     .drawer-panel, .look.side-left .drawer-panel { top: auto; left: 0; right: 0; width: auto; height: var(--inset-b); border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
     .pip-small { width: 160px; }
     .pip-medium { width: 220px; }
@@ -1384,7 +1414,7 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .ctl { transition: opacity 0.3s ease; }
+    .ctl, .dock { transition: opacity 0.3s ease; }
     .prog i { transition: width 0.3s ease; }
     .part i { transition: width 1s linear; }
     .in-fade { animation: fade 0.5s ease both; }

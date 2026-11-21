@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "pictures": "node scripts/fetch-pictures.mjs",
+    "aquarium": "node scripts/aquarium.mjs",
     "things": "node scripts/things.mjs",
     "music": "node scripts/music.mjs"
   },

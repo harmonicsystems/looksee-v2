@@ -21,7 +21,7 @@ https://harmonicsystems.github.io/looksee/?v=1&sets=arrival&daySets=1&day=%5B%5B
 | 2:00 | 🚌👋 Going home | Going home |
 
 The day ends at 2:09. Before 7:50 and after 2:09 it shows Good morning. To change a part's words:
-Tools ▸ Settings ▸ What to show, click the part, then click groups on or off. To keep the change,
+Settings (bottom of the dock at the left) ▸ What to show, click the part, then click groups on or off. To keep the change,
 bookmark the page again and replace the old bookmark.
 
 # Or one bookmark for each part of the day
@@ -43,5 +43,5 @@ on a bookmark switches the screen to those words; the Play button starts them.
 - A change made while a bookmark is open (Spanish words, slower slides) is not saved into the
   bookmark by itself. To keep it, bookmark the page again and replace the old one.
 - The videos (Good Morning Song, Count to 100, Goodbye Song, an aquarium) are not in yet. They
-  will appear under Tools ▸ Watch with these words around them.
+  will appear under 📺 Videos in the dock with these words around them.
 - The words are a first try. Tell us what to add, remove or change in each list.

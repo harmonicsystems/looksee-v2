@@ -729,3 +729,21 @@ setting, which was checked). Any device other than one Mac.
 
 - **Background music: listen to both playlists.** Nobody has heard them yet. Morning Mood grows
   loud in the middle; drop it if it is too much. The budget has 0.2 KB left.
+
+## 2026-11-20: the dock and the aquarium (branch `claude/dock`, not merged)
+
+- The dock replaces Tools; the canvas aquarium is in as its own app. See CLAUDE.md.
+- **Size: 82.6 KB of 84.** David raised the limit from 72 on 2026-11-20. Start-up code 58.0 → 58.6 KB
+  (the dock), the aquarium's own file 9.8 KB, the service worker 6.0 → 6.9 KB.
+- **Checked** in the dev preview at 1366 × 768 and 375 × 812: her bookmark shows ten lessons with
+  "now" marked; a clicked part holds past the clock's 15 s check; Slides returns to the clock's
+  part; a group plays alone and the saved sets stay; the aquarium draws, Space freezes it, Esc
+  leaves it; the weather takes the slides' keys; no console errors. 752 tests pass.
+- **Offline, on the built site** (server stopped, page reloaded): the app, the dock and the
+  aquarium's code and bar load, and its pictures load from the offline store. The sea was not seen
+  drawing there: the preview pane was hidden, which stops animation frames.
+- **Not checked:** the aquarium drawing offline in a visible window, a Tab-only pass through
+  the dock, reduced motion in the aquarium, Watch from the dock with a real video, the projector,
+  the Chromebook, a touch board, and two-emoji part icons on ChromeOS's emoji font.
+- CLAUDE.md's older sections still say "Tools" in places (music, weather, the control bar).
+

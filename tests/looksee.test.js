@@ -17,6 +17,10 @@ import { ROUTINE } from '../src/routine.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
 import { PLAYLISTS, MUSIC_DIR, VOLUMES, duckLevel } from '../src/music.js'
+import { lessons, dockApps } from '../src/dock.js'
+import { createHash } from 'node:crypto'
+import * as SEA from '../src/aquarium/scene.js'
+import { FRAMES } from '../src/aquarium/frames.js'
 import { PLACE, TEMPS, weatherUrl, tempBand, sky, readWeather, weatherLines } from '../src/weather.js'
 
 // Set names are off here unless a test asks for them, so decks hold only their slides.
@@ -1058,8 +1062,8 @@ describe('weather', () => {
   })
   it('is asked only by outside.js, and is never stored for offline use', () => {
     const src = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
-    for (const f of readdirSync(new URL('../src', import.meta.url))) {
-      if (f !== 'outside.js') expect(src(f), f).not.toMatch(/\bfetch\(/)
+    for (const f of readdirSync(new URL('../src', import.meta.url), { recursive: true })) {
+      if (f !== 'outside.js' && /\.(js|svelte)$/.test(f)) expect(src(f), f).not.toMatch(/\bfetch\(/)
     }
     expect(src('outside.js')).toMatch(/credentials: 'omit'/)
     expect(readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8')).not.toMatch(/runtimeCaching|open-meteo/)
@@ -1158,5 +1162,52 @@ describe('where-is-it drafts page', () => {
     const srcs = [...html.matchAll(/src="([^"]+)"/g)].map((m) => m[1])
     expect(srcs.length).toBeGreaterThan(0)
     for (const src of srcs) expect(existsSync(at(`public/where-is-it/${src}`)), src).toBe(true)
+  })
+})
+
+describe('the dock', () => {
+  it('has a lesson for each part of the school day that has sets', () => {
+    const day = [{ at: '07:50', icon: '🐠👋', sets: ['arrival'] }, { at: '09:14', icon: '🚶' }, { at: '14:00', icon: '', sets: ['packUp'] }]
+    const l = lessons({ ...DEFAULTS, daySets: true, day })
+    expect(l.map((x) => [x.kind, x.i, x.icon])).toEqual([['part', 0, '🐠👋'], ['part', 2, '🏫']])
+    expect(l[1].label).toBe('2:00 🏫 Going home')
+  })
+  it('has a lesson for each block of a plan', () => {
+    const l = lessons({ ...DEFAULTS, planOn: true, plan: [{ sets: ['letters', 'adding'], min: 10 }, { sets: ['feelings'], min: 5 }] })
+    expect(l.map((x) => [x.kind, x.icon])).toEqual([['block', '🔤➕'], ['block', '😊']])
+  })
+  it('otherwise has the groups, and those with no pictures only on a device that has some', () => {
+    expect(lessons(DEFAULTS).map((x) => x.icon)).toEqual(GROUPS.filter((g) => !g.own).map((g) => g.emoji))
+    expect(lessons(DEFAULTS, true)).toHaveLength(GROUPS.length)
+    expect(lessons(DEFAULTS).every((x) => x.kind === 'group' && x.sets.length)).toBe(true)
+  })
+  it('offers the weather, music and the corner video only when they are set up', () => {
+    const ids = (s, vid) => dockApps(s, vid).map((a) => a[0])
+    expect(ids(DEFAULTS, false)).toEqual(['aquarium', 'watch', 'timer', 'full'])
+    expect(ids({ ...DEFAULTS, weather: true, music: true }, true)).toEqual(['aquarium', 'watch', 'weather', 'timer', 'music', 'video', 'full'])
+  })
+  it('adds nothing to the settings or to a link', () => {
+    expect(Object.keys(DEFAULTS).filter((k) => /dock|lesson/i.test(k))).toEqual([])
+    expect(linkQuery(DEFAULTS)).toBe('v=1')
+  })
+})
+
+describe('the aquarium', () => {
+  const at = (p) => fileURLToPath(new URL('../' + p, import.meta.url))
+  it('is the one the library checked: scene.js has not been edited here', () => {
+    const { scene } = JSON.parse(readFileSync(at('src/aquarium/checked.json'), 'utf8'))
+    expect(createHash('sha256').update(readFileSync(at('src/aquarium/scene.js'), 'utf8')).digest('hex')).toBe(scene)
+  })
+  it('has every picture it names, and no others', () => {
+    const want = [...Object.values(SEA.PICS), ...Object.entries(FRAMES).flatMap(([dir, f]) => f.frames.map((x) => `${dir}/${x.file}`))].sort()
+    const walk = (dir) => readdirSync(at(dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]))
+    expect(walk('public/aquarium').map((f) => f.slice('public/aquarium/'.length)).sort()).toEqual(want)
+    expect(new Set(SEA.ACTORS.filter((a) => a.frames).map((a) => a.frames))).toEqual(new Set(Object.keys(FRAMES)))
+  })
+  it('asks and answers every question in English and Spanish', () => {
+    for (const m of SEA.MOMENTS) {
+      const a = m.answer(SEA.DEFAULTS, 0)
+      for (const x of [m.ask, a]) expect(x.en && x.es, m.id).toBeTruthy()
+    }
   })
 })
