@@ -115,7 +115,7 @@
   // 0 = as asked, 1 = still picture, 2 = text.
   let tier = $state(0)
   // A thing's picture is the device's own copy when it has one.
-  const own1 = $derived(item.one && pics[item.code])
+  const own1 = $derived(item.one && item.dir === 'things' && pics[item.code])
   $effect(() => {
     if (own1) tier = 0
   })

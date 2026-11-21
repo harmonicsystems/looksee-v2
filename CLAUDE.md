@@ -44,7 +44,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 84 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 82.6 KB now, 1.4 KB under: 58.6 at start, 9.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
+  (`scripts/check-bundle-size.mjs`; 82.1 KB now, 1.9 KB under: 59.6 at start, 9.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -443,6 +443,29 @@ check first and copies nothing if it fails. It changes two things: picture names
   the Words setting, and a click on it says it. Reduced motion opens it frozen.
 - **Its check does not run in Looksee's tests** (it needs the library and ImageMagick); the hash
   test stands in for it.
+
+## Looksee's own pictures, in place of emoji
+
+David asked (2026-11-20) for emoji to become pictures from his picture library
+(`~/Code/picture-library`: his own, made with Codex, free to publish). 107 are in `public/pic/` as
+512 px AVIF (0.9 MB, stored for offline use), copied by `npm run icons` (`scripts/icons.mjs`, which
+lists each picture's name and where it is in the library). **An emoji with no picture yet stays an
+emoji**; the list of those is in `docs/STATUS.md`. Feelings, Gestures and Body were left as they are.
+
+- **A word names its picture:** the fifth thing on a line of `routine.js`, `pic` on a letter word
+  (`LETTERS`), a video word (`videos.js`) and a sky (`weather.js`). An Our day word with a picture
+  is a `picture` slide with `one: true`, `dir: 'pic'`, and its emoji behind it if the file can't
+  load; one without is still `word: true`.
+- **An icon is looked up by its emoji** (`pics.js`, `icons(text)`): on the school-day bar, the
+  dock, the group buttons and the choosers. So a part's icons are still typed and kept as emoji
+  (in Settings and in links), and bookmark names are still emoji; they are only drawn as pictures.
+  `em` in `App.svelte` draws them; a picture that can't load shows its emoji (its `alt`).
+- **To add one:** look at it at full size, add a line to `FROM` in `scripts/icons.mjs`, name it
+  where it is used, `npm run icons`. A test fails if a file is missing or left over.
+- The q and z letter pictures (quesadilla, zoo) are cards with a cream background, not cut out:
+  a pale square shows behind them on the Night and High contrast themes.
+- `vite.config.js` lists Google's emoji files without fingerprints (`dontCacheBustURLsMatching`),
+  which paid for these in the size gate: those files must never be replaced under the same name.
 
 ## The timer, and the control bar
 

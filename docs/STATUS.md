@@ -747,3 +747,25 @@ setting, which was checked). Any device other than one Mac.
   the Chromebook, a touch board, and two-emoji part icons on ChromeOS's emoji font.
 - CLAUDE.md's older sections still say "Tools" in places (music, weather, the control bar).
 
+## 2026-11-20: pictures in place of emoji (branch `claude/dock`)
+
+107 of the library's pictures replace emoji (see CLAUDE.md). 82.1 KB of 84. Checked in the dev
+preview at 1366 × 768: an Our day word, a letter word, the day bar, the dock and the weather's sky
+draw as pictures, none broken. Not checked: Watch's words with a real video, the Night and High
+contrast themes, a phone, the built site.
+
+**Still emoji, because the library has no picture yet** (David decides what to make):
+
+- Our day words (4): quiet hands, door, go, number.
+- Words around the Paw Patrol video (4): Paw Patrol, pup, team, slide.
+- Weather (3): partly cloudy, foggy, drizzly.
+- Dock, lesson groups (6): Letters & Numbers, Count to 100, Math, Opposites, Feelings & Body, Animals.
+- Dock, apps (5): Videos, Weather, Music, Corner video, Full screen. (Timer uses the clock.)
+- Music playlists (1): Nursery tunes.
+- In the teacher's day bar (2): 🎵 and 🔢. Any other emoji typed into a schedule stays an emoji
+  unless `pics.js` names a picture for it.
+
+**To look at again:** the cast pictures (wave, walk) are small standing figures at dock and
+day-bar size; "more" in Math words uses Ana's blocks picture and "more" in Core words uses Jo's
+bowl; "help" is Ana raising her hand; "jacket" is the fleece jacket and "hat" the cap.
+

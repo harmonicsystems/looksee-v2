@@ -25,6 +25,7 @@
   import { PLACE, TEMPS, weatherLines } from './weather.js'
   import { getWeather } from './outside.js'
   import { lessons, dockApps } from './dock.js'
+  import { icons, picSrc } from './pics.js'
 
   let { update = null } = $props()
 
@@ -705,7 +706,7 @@
   const k = $derived.by(() => {
     if (s.size !== 'full') return SIZE[s.size]
     if (!item || !s.showLabel || !rows.length) return 94
-    return rows.length > 1 ? 79 : item.kind === 'glyph' && item.emoji ? 82 : 85
+    return rows.length > 1 ? 79 : item.kind === 'glyph' && (item.emoji || item.pic) ? 82 : 85
   })
 </script>
 
@@ -723,6 +724,10 @@
   </fieldset>
 {/snippet}
 
+<!-- An emoji, or a string of them, drawn as Looksee's own pictures where there are some
+     (pics.js); `pic` names one outright. A picture that can't load shows its emoji (alt). -->
+{#snippet em(text, pic)}{#if pic}<img class="em" src={picSrc(pic)} alt={text} />{:else}{#each icons(text) as [g, p]}{#if p}<img class="em" src={picSrc(p)} alt={g} />{:else}{g}{/if}{/each}{/if}{/snippet}
+
 <div
   class="look bg-{s.background}"
   class:drawer
@@ -736,7 +741,7 @@
       {#each parts as p}
         <div class="part {p.state}" style="flex-grow:{p.minutes}">
           {#if p.state === 'now'}<i style="width:{p.frac * 100}%"></i>{/if}
-          <span>{p.icon}</span>
+          <span>{@render em(p.icon)}</span>
         </div>
       {/each}
     </div>
@@ -762,7 +767,7 @@
                 class:wait={wait > 0 && item.kind !== 'title'}
                 style="--len:{len};--wait:{wait}s;--first:{item.hex ? theme.ink : color}"
               >
-                {#if item.kind === 'glyph' && item.emoji}<span class="pic" aria-hidden="true">{item.emoji}</span>{/if}
+                {#if item.kind === 'glyph' && (item.emoji || item.pic)}<span class="pic" aria-hidden="true">{@render em(item.emoji, item.pic)}</span>{/if}
                 <span class="rows">
                   {#each rows as r (r.lang)}
                     <span class="words" class:two={r.words.length > 1} lang={r.lang}>
@@ -794,7 +799,7 @@
 
   {#snippet word(x)}
     <button class="ww" class:lit={x.i === lit} onclick={() => speakWord(x)}>
-      <span class="ww-pic" aria-hidden="true">{x.emoji}</span>
+      <span class="ww-pic" aria-hidden="true">{@render em(x.emoji, x.pic)}</span>
       {#each x.rows as r (r.lang)}
         <span class="ww-word" lang={r.lang}>{r.art ? r.art + ' ' : ''}{r.words.join(' ')}</span>
       {/each}
@@ -823,9 +828,9 @@
       {#if wxWords}
         <p class="wx-place">{PLACE.name} · {wxTime}</p>
         <div class="wx-cols">
-          {#each [['sky', wx.sky.emoji], ['temp', wx.temp + '°F']] as [key, big] (key)}
+          {#each [['sky', ''], ['temp', wx.temp + '°F']] as [key, big] (key)}
             <div class="wx-col">
-              <span class="wx-big {key}" style="color:{theme.colors[theme.heat[wx.band]]}" aria-hidden="true">{big}</span>
+              <span class="wx-big {key}" style="color:{theme.colors[theme.heat[wx.band]]}" aria-hidden="true">{#if big}{big}{:else}{@render em(wx.sky.emoji, wx.sky.pic)}{/if}</span>
               {#each wxWords[key] as r (r.lang)}
                 <span class="wx-word" lang={r.lang}>{r.words[0]}</span>
               {/each}
@@ -850,7 +855,7 @@
     <div class="pick" role="dialog" aria-modal="true" aria-label="Choose music">
       <div class="pick-grid">
         {#each PLAYLISTS as p (p.id)}
-          <button class="btn tile" aria-pressed={tune === p.id} onclick={() => startMusic(p)}><span class="tile-pic" aria-hidden="true">{p.emoji}</span>{p.label}</button>
+          <button class="btn tile" aria-pressed={tune === p.id} onclick={() => startMusic(p)}><span class="tile-pic" aria-hidden="true">{@render em(p.emoji)}</span>{p.label}</button>
         {/each}
         {#if tune}<button class="btn tile close" onclick={() => ((choosing = false), stopMusic())}>Stop music</button>{/if}
         <button class="btn tile close" onclick={() => (choosing = false)}>Close</button>
@@ -864,7 +869,7 @@
     <div class="pick" role="dialog" aria-modal="true" aria-label="Choose a video">
       <div class="pick-grid">
         {#each watchList as v (v.id)}
-          <button class="btn tile" onclick={() => watch(v)}><span class="tile-pic" aria-hidden="true">{v.emoji}</span>{v.title}</button>
+          <button class="btn tile" onclick={() => watch(v)}><span class="tile-pic" aria-hidden="true">{@render em(v.emoji)}</span>{v.title}</button>
         {/each}
         <button class="btn tile close" onclick={() => (picking = false)}>Close</button>
       </div>
@@ -895,12 +900,12 @@
   <nav class="dock" aria-label="Dock">
     <button class="btn wide" aria-pressed={!app && !held && !lesson} onclick={goHome}>Slides</button>
     {#each dockLessons as l (l.kind + l.i)}
-      <button class="btn" class:now={l.kind === 'part' && s.day[l.i] === partNow} aria-pressed={lessonOn(l)} aria-label={l.label} title={l.label} onclick={() => goLesson(l)}>{l.icon}</button>
+      <button class="btn" class:now={l.kind === 'part' && s.day[l.i] === partNow} aria-pressed={lessonOn(l)} aria-label={l.label} title={l.label} onclick={() => goLesson(l)}>{@render em(l.icon)}</button>
     {/each}
     <hr />
     {#each dockApps(s, vid) as [id, icon, name] (id)}
       <button class="btn" id="dk-{id}" aria-pressed={dockOn(id)} aria-label={name} title={name} onclick={DOCK[id]}>
-        {icon}{#if id === 'timer' && timerText}<small class="mono">{timerText}</small>{/if}
+        {@render em(icon)}{#if id === 'timer' && timerText}<small class="mono">{timerText}</small>{/if}
       </button>
     {/each}
     <button class="btn wide" aria-pressed={drawer} onclick={() => (drawer = !drawer)}>Settings</button>
@@ -974,7 +979,7 @@
                 class="btn grp-head"
                 aria-pressed={on === g.sets.length ? 'true' : on ? 'mixed' : 'false'}
                 onclick={() => toggleGroup(g, on === g.sets.length)}
-              ><span aria-hidden="true">{g.emoji}</span> {g.label}</button>
+              ><span aria-hidden="true">{@render em(g.emoji)}</span> {g.label}</button>
               {#if single && g.sets.length > 1}
                 <div class="seg">
                   {#each g.sets as id}
@@ -1233,6 +1238,7 @@
   .label.title { font-size: min(15cqmin, var(--fit)); }
   .label.both.title { font-size: min(11cqmin, var(--fit)); }
   .rows { display: flex; flex-direction: column; align-items: center; gap: 0.6cqmin; }
+  .em { height: 1.2em; width: auto; max-width: 1.6em; object-fit: contain; vertical-align: -0.25em; }
   .pic { font-size: 1.5em; line-height: 1; }
   .label.both .pic { font-size: 2.2em; }
   .words { display: flex; justify-content: center; text-align: center; white-space: nowrap; }
@@ -1325,6 +1331,9 @@
   .dock { position: absolute; z-index: 3; left: 0; top: var(--day-h); bottom: 0; width: var(--dock-w); padding: 8px; display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 6px; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); }
   .dock .btn { position: relative; min-height: 50px; padding: 2px; font-size: 22px; line-height: 1.1; }
   .dock .wide { grid-column: 1 / -1; font-size: 15px; }
+  .dock .btn { white-space: nowrap; }
+  .dock .em { height: 1em; max-width: 1em; vertical-align: -0.15em; }
+  .dock .btn:has(.em:only-child) .em { height: 1.5em; max-width: 1.7em; }
   .dock .wide:last-child { margin-top: 6px; }
   .dock hr { grid-column: 1 / -1; width: 100%; margin: 2px 0; border: 0; border-top: 1px solid var(--line); }
   .dock small { display: block; font-size: 12px; }

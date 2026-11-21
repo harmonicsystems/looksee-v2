@@ -31,19 +31,19 @@ export const tempBand = (f) => TEMPS.reduce((b, t, i) => (f >= t.from ? i : b), 
 // The sky, by Open-Meteo's weather code (the WMO codes). Each entry covers
 // the codes up to and including `to`.
 const SKIES = [
-  { to: 0, emoji: '☀️', label: 'sunny', es: 'soleado' },
+  { to: 0, emoji: '☀️', label: 'sunny', pic: 'sun', es: 'soleado' },
   { to: 2, emoji: '⛅', label: 'partly cloudy', es: 'algo nublado' },
-  { to: 3, emoji: '☁️', label: 'cloudy', es: 'nublado' },
+  { to: 3, emoji: '☁️', label: 'cloudy', pic: 'cloud', es: 'nublado' },
   { to: 48, emoji: '🌫️', label: 'foggy', es: 'con niebla' },
   { to: 57, emoji: '🌦️', label: 'drizzly', es: 'con llovizna' },
-  { to: 67, emoji: '🌧️', label: 'rainy', es: 'lluvioso' },
-  { to: 77, emoji: '🌨️', label: 'snowy', es: 'con nieve' },
-  { to: 82, emoji: '🌧️', label: 'rainy', es: 'lluvioso' },
-  { to: 86, emoji: '🌨️', label: 'snowy', es: 'con nieve' },
-  { to: 99, emoji: '⛈️', label: 'stormy', es: 'tormentoso' }
+  { to: 67, emoji: '🌧️', label: 'rainy', pic: 'raindrop', es: 'lluvioso' },
+  { to: 77, emoji: '🌨️', label: 'snowy', pic: 'snowflake', es: 'con nieve' },
+  { to: 82, emoji: '🌧️', label: 'rainy', pic: 'raindrop', es: 'lluvioso' },
+  { to: 86, emoji: '🌨️', label: 'snowy', pic: 'snowflake', es: 'con nieve' },
+  { to: 99, emoji: '⛈️', label: 'stormy', pic: 'storm', es: 'tormentoso' }
 ]
 // A clear sky after dark has no sun in it.
-const NIGHT = { emoji: '🌙', label: 'clear', es: 'despejado' }
+const NIGHT = { emoji: '🌙', label: 'clear', pic: 'moon', es: 'despejado' }
 
 export function sky(code, day = true) {
   if (code === 0 && !day) return NIGHT

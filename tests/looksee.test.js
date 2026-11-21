@@ -18,6 +18,8 @@ import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
 import { PLAYLISTS, MUSIC_DIR, VOLUMES, duckLevel } from '../src/music.js'
 import { lessons, dockApps } from '../src/dock.js'
+import { PIC_DIR, ICON_PICS, icons } from '../src/pics.js'
+import { NAMES as PIC_NAMES } from '../src/pics.names.js'
 import { createHash } from 'node:crypto'
 import * as SEA from '../src/aquarium/scene.js'
 import { FRAMES } from '../src/aquarium/frames.js'
@@ -380,11 +382,14 @@ describe('our day', () => {
         expect(x.emoji, x.label).not.toMatch(newer)
       }
   })
-  it('draws a routine word as its emoji, never a file', () => {
+  it('draws a routine word as its own picture, with its emoji behind it, or as its emoji alone', () => {
     const d = deck({ sets: ['packUp'] })
     expect(d.length).toBe(ROUTINE.packUp.length)
-    expect(d[0]).toMatchObject({ kind: 'picture', word: true, label: 'jacket', emoji: '🧥', say: 'jacket' })
-    expect(d.every((x) => !x.dir && !x.code)).toBe(true)
+    expect(d[0]).toMatchObject({ kind: 'picture', one: true, dir: 'pic', code: 'jacket', label: 'jacket', emoji: '🧥', say: 'jacket' })
+    expect(pictureSrc(d[0], true)).toBe('pic/jacket.avif')
+    const door = deck({ sets: ['lineUp'] }).find((x) => x.label === 'door')
+    expect(door).toMatchObject({ kind: 'picture', word: true, emoji: '🚪' })
+    expect(door.dir || door.code).toBeFalsy()
     expect(rowsText(labelRows(d[0], { words: 'both', articles: true }))).toBe('jacket / la chaqueta')
   })
   it('names a bookmark after the group', () => {
@@ -1209,5 +1214,28 @@ describe('the aquarium', () => {
       const a = m.answer(SEA.DEFAULTS, 0)
       for (const x of [m.ask, a]) expect(x.en && x.es, m.id).toBeTruthy()
     }
+  })
+})
+
+describe("Looksee's own pictures", () => {
+  const used = [
+    ...Object.values(ROUTINE).flat(),
+    ...LETTERS,
+    ...VIDEOS.flatMap((v) => v.words),
+    ...[0, 2, 3, 48, 57, 67, 77, 99].map((c) => sky(c)),
+    sky(0, false)
+  ].map((x) => x.pic).filter(Boolean)
+  it('has a file for every picture named, and no file nothing names', () => {
+    const files = readdirSync(new URL(`../public/${PIC_DIR}`, import.meta.url)).map((f) => f.replace(/\.avif$/, '')).sort()
+    expect(files).toEqual(PIC_NAMES)
+    expect([...new Set([...used, ...ICON_PICS])].sort()).toEqual(PIC_NAMES)
+  })
+  it('gives every letter word a picture', () => {
+    expect(LETTERS.every((x) => x.pic)).toBe(true)
+  })
+  it('draws an icon as its picture where there is one, and leaves the rest as emoji', () => {
+    expect(icons('🚌👋')).toEqual([['🚌', 'bus'], ['👋', 'wave']])
+    expect(icons('☀️🎵')).toEqual([['☀️', 'sun'], ['🎵', undefined]])
+    expect(icons('')).toEqual([])
   })
 })

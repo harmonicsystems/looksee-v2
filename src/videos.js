@@ -10,7 +10,7 @@
 
 import { ROUTINE } from './routine.js'
 
-const w = (label, es, art, emoji) => ({ label, es, art, emoji })
+const w = (label, es, art, emoji, pic) => ({ label, es, art, emoji, pic })
 
 export const VIDEOS = [
   // A calm tank for arrival, with the Good morning words (found by David, 2026-11-18).
@@ -22,15 +22,15 @@ export const VIDEOS = [
     url: 'https://youtu.be/z1vXJVI2L5M',
     words: [
       w('Paw Patrol', 'Paw Patrol', '', '🐾'),
-      w('dog', 'perro', 'el', '🐶'),
+      w('dog', 'perro', 'el', '🐶', 'dog'),
       w('pup', 'cachorro', 'el', '🐕'),
-      w('penguin', 'pingüino', 'el', '🐧'),
-      w('help', 'ayuda', 'la', '🆘'),
-      w('rescue', 'rescate', 'el', '🚒'),
+      w('penguin', 'pingüino', 'el', '🐧', 'penguin'),
+      w('help', 'ayuda', 'la', '🆘', 'help'),
+      w('rescue', 'rescate', 'el', '🚒', 'fire-engine'),
       w('team', 'equipo', 'el', '🤝'),
-      w('snow', 'nieve', 'la', '❄️'),
-      w('ice', 'hielo', 'el', '🧊'),
-      w('cold', 'frío', '', '🥶'),
+      w('snow', 'nieve', 'la', '❄️', 'snowflake'),
+      w('ice', 'hielo', 'el', '🧊', 'icicles'),
+      w('cold', 'frío', '', '🥶', 'shiver'),
       w('slide', 'deslizarse', '', '🛝')
     ]
   }

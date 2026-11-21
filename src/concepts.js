@@ -11,6 +11,7 @@
 import { polygon, curves, ellipse, regular, resample } from './morph.js'
 import { THINGS, THINGS_DIR } from './things.js'
 import { ROUTINE } from './routine.js'
+import { PIC_DIR } from './pics.js'
 
 const dot = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`
 
@@ -96,32 +97,32 @@ export const OPPOSITES = [
 // `emoji` is a small picture drawn by the device's own emoji font (no file);
 // three letters have no fitting one and show the word alone.
 export const LETTERS = [
-  { label: 'airplane', es: 'avión', art: 'el', emoji: '✈️' },
-  { label: 'banana', es: 'banana', art: 'la', emoji: '🍌' },
-  { label: 'car', es: 'carro', art: 'el', emoji: '🚗' },
-  { label: 'dinosaur', es: 'dinosaurio', art: 'el', emoji: '🦕' },
-  { label: 'elephant', es: 'elefante', art: 'el', emoji: '🐘' },
-  { label: 'flower', es: 'flor', art: 'la', emoji: '🌸' },
-  { label: 'guitar', es: 'guitarra', art: 'la', emoji: '🎸' },
-  { label: 'helicopter', es: 'helicóptero', art: 'el', emoji: '🚁' },
-  { label: 'island', es: 'isla', art: 'la', emoji: '🏝️' },
-  { label: 'juice', es: 'jugo', art: 'el', emoji: '🧃' },
-  { label: 'koala', es: 'koala', art: 'el', emoji: '🐨' },
-  { label: 'lion', es: 'león', art: 'el', emoji: '🦁' },
-  { label: 'monkey', es: 'mono', art: 'el', emoji: '🐒' },
-  { label: 'nose', es: 'nariz', art: 'la', emoji: '👃' },
-  { label: 'ocean', es: 'océano', art: 'el', emoji: '🌊' },
-  { label: 'penguin', es: 'pingüino', art: 'el', emoji: '🐧' },
-  { label: 'quesadilla', es: 'quesadilla', art: 'la', emoji: '' },
-  { label: 'robot', es: 'robot', art: 'el', emoji: '🤖' },
-  { label: 'sun', es: 'sol', art: 'el', emoji: '☀️' },
-  { label: 'tiger', es: 'tigre', art: 'el', emoji: '🐯' },
-  { label: 'unicorn', es: 'unicornio', art: 'el', emoji: '🦄' },
-  { label: 'volcano', es: 'volcán', art: 'el', emoji: '🌋' },
-  { label: 'waffle', es: 'wafle', art: 'el', emoji: '🧇' },
-  { label: 'xylophone', es: 'xilófono', art: 'el', emoji: '' },
-  { label: 'yo-yo', es: 'yoyo', art: 'el', emoji: '🪀' },
-  { label: 'zoo', es: 'zoológico', art: 'el', emoji: '' }
+  { label: 'airplane', es: 'avión', art: 'el', emoji: '✈️', pic: 'airplane' },
+  { label: 'banana', es: 'banana', art: 'la', emoji: '🍌', pic: 'banana' },
+  { label: 'car', es: 'carro', art: 'el', emoji: '🚗', pic: 'car' },
+  { label: 'dinosaur', es: 'dinosaurio', art: 'el', emoji: '🦕', pic: 'dinosaur' },
+  { label: 'elephant', es: 'elefante', art: 'el', emoji: '🐘', pic: 'elephant' },
+  { label: 'flower', es: 'flor', art: 'la', emoji: '🌸', pic: 'flower' },
+  { label: 'guitar', es: 'guitarra', art: 'la', emoji: '🎸', pic: 'guitar' },
+  { label: 'helicopter', es: 'helicóptero', art: 'el', emoji: '🚁', pic: 'helicopter' },
+  { label: 'island', es: 'isla', art: 'la', emoji: '🏝️', pic: 'island' },
+  { label: 'juice', es: 'jugo', art: 'el', emoji: '🧃', pic: 'juice' },
+  { label: 'koala', es: 'koala', art: 'el', emoji: '🐨', pic: 'koala' },
+  { label: 'lion', es: 'león', art: 'el', emoji: '🦁', pic: 'lion' },
+  { label: 'monkey', es: 'mono', art: 'el', emoji: '🐒', pic: 'monkey' },
+  { label: 'nose', es: 'nariz', art: 'la', emoji: '👃', pic: 'nose' },
+  { label: 'ocean', es: 'océano', art: 'el', emoji: '🌊', pic: 'ocean' },
+  { label: 'penguin', es: 'pingüino', art: 'el', emoji: '🐧', pic: 'penguin' },
+  { label: 'quesadilla', es: 'quesadilla', art: 'la', emoji: '', pic: 'quesadilla' },
+  { label: 'robot', es: 'robot', art: 'el', emoji: '🤖', pic: 'robot' },
+  { label: 'sun', es: 'sol', art: 'el', emoji: '☀️', pic: 'sun' },
+  { label: 'tiger', es: 'tigre', art: 'el', emoji: '🐯', pic: 'tiger' },
+  { label: 'unicorn', es: 'unicornio', art: 'el', emoji: '🦄', pic: 'unicorn' },
+  { label: 'volcano', es: 'volcán', art: 'el', emoji: '🌋', pic: 'volcano' },
+  { label: 'waffle', es: 'wafle', art: 'el', emoji: '🧇', pic: 'waffle' },
+  { label: 'xylophone', es: 'xilófono', art: 'el', emoji: '', pic: 'xylophone' },
+  { label: 'yo-yo', es: 'yoyo', art: 'el', emoji: '🪀', pic: 'yo-yo' },
+  { label: 'zoo', es: 'zoológico', art: 'el', emoji: '', pic: 'zoo' }
 ]
 
 // Feelings, gestures and body parts are pictures, not drawings: Google's
@@ -490,8 +491,10 @@ export function buildDeck(s, rng = Math.random) {
   const tone = dealer(s.skin, rng)
   add('gestures', () => GESTURES.map((x) => picture('gestures', 'people', x, tone(x))))
   add('body', () => BODY.map((x) => picture('body', 'people', x, tone(x))))
-  // A routine word is its emoji drawn as text: no file to ask for.
-  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label })))
+  // A routine word is its own picture (pics.js), with its emoji behind it if
+  // the file can't load; a word with no picture yet is its emoji as text.
+  for (const id in ROUTINE)
+    add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, ...(x.pic ? { dir: PIC_DIR, one: true, code: x.pic } : { word: true }), ...x, say: x.label })))
   for (const id of Object.keys(THINGS)) add(id, () => THINGS[id].map((x) => thing(id, x)))
   if (s.order !== 'shuffle') return deck
   // Mixed up, the count to 100 still counts: its slides stay in order, as one

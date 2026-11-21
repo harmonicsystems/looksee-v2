@@ -12,7 +12,8 @@
     "pictures": "node scripts/fetch-pictures.mjs",
     "aquarium": "node scripts/aquarium.mjs",
     "things": "node scripts/things.mjs",
-    "music": "node scripts/music.mjs"
+    "music": "node scripts/music.mjs",
+    "icons": "node scripts/icons.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.1.0",

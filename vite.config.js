@@ -47,7 +47,12 @@ export default defineConfig({
         // of the app: it is not stored, and the service worker must not answer
         // a visit to it with the app's own page.
         globIgnores: ['things/**', 'music/**', 'where-is-it/**'],
-        navigateFallbackDenylist: [/\/where-is-it\//]
+        navigateFallbackDenylist: [/\/where-is-it\//],
+        // Google's emoji pictures are named by their code point and never
+        // change under that name, so they are listed without a fingerprint:
+        // that saves about 4 KB of service worker. Never replace one of
+        // those files in place; a changed picture needs a new name.
+        dontCacheBustURLsMatching: /^(feelings|people)\//
       }
     })
   ],
