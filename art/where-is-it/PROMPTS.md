@@ -13,7 +13,8 @@ the same size in the same place, and the only thing that changes is the thing be
 ## Decisions (David, 2026-11-17)
 
 - **Cast:** the sequence app's children, Ana, Sam, Jo and Max, from their turnaround sheets in
-  `~/Code/sequence/.claude/worktrees/story-champs-research-practices-55a760/img/_cast/`.
+  `~/Code/picture-library/cast/` (where the cast has been kept since 2026-11-19; first drawn for
+  sequence).
 - **Nobody stands on furniture.** Children sit on the chair or under the table; *on* the table
   or the ledge is a teddy, ball or backpack.
 - **Furniture:** a classic school chair-desk, redrawn from a retailer's product photo (kept

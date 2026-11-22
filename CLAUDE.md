@@ -454,6 +454,10 @@ there. The dock replaced Tools and every "Back to slides" button.
 
 ## The aquarium
 
+How Looksee, the picture library, sequence and Clip Choice fit together, and everything that is
+copied in from the library, is in `~/Code/picture-library/MAP.md`. `npm run tuning` there says
+whether the copies here still match.
+
 A two-minute sea loop to ask questions from (how many clownfish, over or under, fast or slow, what
 colour). **It is made and proved in David's picture library** (`~/Code/picture-library/projects/aquarium`,
 where `check.mjs` proves every question true for its whole moment) and copied here by
