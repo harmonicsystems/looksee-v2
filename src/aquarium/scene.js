@@ -101,7 +101,7 @@ export const LOOPS = [
 ]
 // `card` is the face a moment's card opens on: something to say, or the question.
 export const DEFAULTS = { clownfish: 3, sub: 'yellow', speed: 1, water: 'light', card: 'say', place: 'reef', loops: 'turn' }
-export const CHOICES = { clownfish: [1, 2, 3, 4, 5], sub: [...COLOURS.map((c) => c.id), 'each'], speed: [0.5, 1], water: ['light', 'deep'], card: ['say', 'ask'], place: PLACES.map((p) => p.id), loops: ['turn', ...LOOPS.map((l) => l.id)] }
+export const CHOICES = { clownfish: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], sub: [...COLOURS.map((c) => c.id), 'each'], speed: [0.5, 1], water: ['light', 'deep'], card: ['say', 'ask'], place: PLACES.map((p) => p.id), loops: ['turn', ...LOOPS.map((l) => l.id)] }
 const mod = (n, m) => ((n % m) + m) % m
 // Which loop plays as loop number n, and how many times it has played before.
 // A loop held by the `loops` setting decides the place too.
@@ -120,15 +120,22 @@ export const STRIP = 0.25
 
 // ---- The clownfish: at home around their anemone at the right, lapping it,
 // except while they hold still at spread-out spots to be counted. Any first n
-// spots are apart.
+// spots are apart. The first five keep close to the anemone; six to ten spread out
+// over the open water, which is empty while they are counted.
 const ANEMONE = 0.84
-const SPOTS = [[0.76, 0.56], [0.90, 0.56], [0.83, 0.40], [0.71, 0.72], [0.93, 0.72]]
+const SPOTS = [[0.76, 0.56], [0.90, 0.56], [0.83, 0.40], [0.71, 0.72], [0.93, 0.72],
+  [0.60, 0.57], [0.705, 0.26], [0.935, 0.22], [0.82, 0.20], [0.49, 0.66]]
 const LAPS = [ // centre x, centre y, reach x (widths), reach y (heights), seconds a lap, which way, where it starts
   [0.83, 0.60, 0.09, 0.08, 8, 1, 0],
   [0.85, 0.55, 0.07, 0.10, 10, -1, 1],
   [0.82, 0.66, 0.10, 0.06, 12, 1, 2],
   [0.86, 0.60, 0.06, 0.09, 15, -1, 3],
   [0.81, 0.53, 0.08, 0.07, 20, 1, 1],
+  [0.83, 0.58, 0.10, 0.11, 14, -1, 2],   // six to ten: wider rings, so ten do not pile up
+  [0.82, 0.54, 0.10, 0.13, 17, 1, 3],
+  [0.84, 0.61, 0.11, 0.09, 19, -1, 0],
+  [0.83, 0.56, 0.09, 0.12, 22, 1, 2],
+  [0.84, 0.60, 0.11, 0.10, 25, -1, 1],
 ]
 const COUNT = [2, 12]                     // the clownfish hold still for counting
 function clownKeys(i, spots = SPOTS, laps = LAPS) {
@@ -143,30 +150,40 @@ function clownKeys(i, spots = SPOTS, laps = LAPS) {
 // Hide and seek: one after another they go to the anemone's top (the door), change
 // depth there in the open, and sink in behind its tentacles (86–96). The keys near
 // the join stay as they are in every loop.
-const IN = [[0.84, 0.77], [0.818, 0.785], [0.862, 0.785], [0.826, 0.757], [0.854, 0.757]]
+const IN = [[0.84, 0.77], [0.818, 0.785], [0.862, 0.785], [0.826, 0.757], [0.854, 0.757],
+  [0.84, 0.752], [0.812, 0.77], [0.868, 0.77], [0.832, 0.792], [0.848, 0.792]]
 const DOOR = [0.84, 0.62]
 function clownHide(i) {
-  const out = 79 + i, back = 98.5 + 0.6 * i
+  // Six to ten go between the first five, half a second after each.
+  const j = i % 5, late = i < 5 ? 0 : 0.5
+  const out = 79 + j - late, back = 98.5 + 0.6 * j + late / 2
   return {
-    keys: [...clownKeys(i).filter((k) => k[0] < 76 || k[0] > 103), [out, ...DOOR], [84 + 0.5 * i, ...IN[i]], [96, ...IN[i]], [back, ...DOOR]].sort((p, q) => p[0] - q[0]),
+    keys: [...clownKeys(i).filter((k) => k[0] < 76 || k[0] > 103), [out, ...DOOR], [84 + 0.5 * j - late / 2, ...IN[i]], [96, ...IN[i]], [back, ...DOOR]].sort((p, q) => p[0] - q[0]),
     depth: [[0, 5], [out, 3.9], [back, 5]],
   }
 }
 
 // The cove: their anemone is nearer the right edge, so they lap it more tightly and
 // are counted in the open water above it.
-const COVE_SPOTS = [[0.80, 0.52], [0.94, 0.52], [0.87, 0.36], [0.73, 0.36], [0.94, 0.20]]
+const COVE_SPOTS = [[0.80, 0.52], [0.94, 0.52], [0.87, 0.36], [0.73, 0.36], [0.94, 0.20],
+  [0.80, 0.20], [0.66, 0.20], [0.66, 0.52], [0.59, 0.36], [0.52, 0.52]]
 const COVE_LAPS = [
   [0.895, 0.56, 0.05, 0.08, 8, 1, 0],
   [0.90, 0.50, 0.045, 0.10, 10, -1, 1],
   [0.89, 0.60, 0.055, 0.06, 12, 1, 2],
   [0.905, 0.54, 0.04, 0.09, 15, -1, 3],
   [0.885, 0.48, 0.05, 0.07, 20, 1, 1],
+  [0.90, 0.58, 0.045, 0.07, 9, -1, 2],
+  [0.89, 0.52, 0.05, 0.09, 11, 1, 3],
+  [0.905, 0.59, 0.04, 0.06, 13, -1, 0],
+  [0.895, 0.51, 0.045, 0.10, 16, 1, 2],
+  [0.89, 0.60, 0.05, 0.05, 18, -1, 1],
 ]
 
-// The shipwreck: the anemone is where it is in the cove; the first spot is a little
-// further from the ship's stern.
-const WRECK_SPOTS = [[0.82, 0.53], ...COVE_SPOTS.slice(1)]
+// The shipwreck: the anemone is where it is in the cove. They are counted in the
+// open water above the ship, clear of its mast and rails.
+const WRECK_SPOTS = [[0.94, 0.42], [0.80, 0.42], [0.87, 0.26], [0.73, 0.26], [0.94, 0.10],
+  [0.80, 0.10], [0.59, 0.26], [0.66, 0.10], [0.45, 0.26], [0.52, 0.10]]
 
 // ---- A school of fish: twelve small fish that swim in, make a shape, hold it, loosen
 // and make the next. A shape is twelve spots, one a fish, spaced evenly along its
@@ -305,7 +322,7 @@ export const ACTORS = [
     keys: [[84, 1.52, 0.31], [94, 0.79, 0.31], [104, 0.59, 0.31], [114, -0.26, 0.31], [114, 1.52, 0.31]] },
 
   // ---- One more.
-  // A purple visitor joins the clownfish at a sixth spot (one more 18–26, different
+  // A purple visitor joins the clownfish at a spot of its own (one more 18–26, different
   // 28–36) and swims off (take away 44–52).
   { id: 'visitor', in: 'more', pic: 'visitor', name: { en: 'purple fish', es: 'pez morado' }, fish: true, h: 0.11, z: 5, rig: 'fish', flick: 110, bobs: 21, seed: 0.45,
     body: '#c1a1a5', tint: 'purple', keys: [[13, 1.25, 0.20], [17.5, 0.62, 0.42], [36, 0.62, 0.42], [42, 1.25, 0.20]] },
@@ -488,7 +505,7 @@ export const STREAMS = [
 // sentence (`say`) and an open starter for the children (`start`). To ask: `ask` and
 // its `answer`. A moment with no `ask` is comment only. Any of them may be a function
 // of the settings and the loop; tell() resolves them.
-const NUM = { 1: ['one', 'uno'], 2: ['two', 'dos'], 3: ['three', 'tres'], 4: ['four', 'cuatro'], 5: ['five', 'cinco'], 6: ['six', 'seis'] }
+const NUM = { 1: ['one', 'uno'], 2: ['two', 'dos'], 3: ['three', 'tres'], 4: ['four', 'cuatro'], 5: ['five', 'cinco'], 6: ['six', 'seis'], 7: ['seven', 'siete'], 8: ['eight', 'ocho'], 9: ['nine', 'nueve'], 10: ['ten', 'diez'], 11: ['eleven', 'once'] }
 const START = {
   see: { en: 'I see…', es: 'Veo…' }, look: { en: 'Look!', es: '¡Mira!' }, like: { en: 'I like…', es: 'Me gusta…' },
   who: { en: 'Who is it?', es: '¿Quién es?' }, bye: { en: 'Bye-bye…', es: 'Adiós…' }, think: { en: 'I think…', es: 'Creo que…' },

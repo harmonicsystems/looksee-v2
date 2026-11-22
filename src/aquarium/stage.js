@@ -18,14 +18,19 @@ const newCanvas = (w, h) => { const c = document.createElement('canvas'); c.widt
 
 // Load every picture in scene.js and every frame set its actors play, and measure
 // each drawing.
+// A picture's pixels are read when it is measured, split or recoloured, and not kept:
+// kept for every picture they were as much memory again as the pictures themselves.
+function pixelsOf(img) {
+  const c = newCanvas(img.naturalWidth, img.naturalHeight), g = c.getContext('2d', { willReadFrequently: true })
+  g.drawImage(img, 0, 0)
+  return g.getImageData(0, 0, c.width, c.height)
+}
 async function loadPicture(src) {
   const img = new Image()
   img.src = src
   await img.decode()
-  const c = newCanvas(img.naturalWidth, img.naturalHeight), g = c.getContext('2d', { willReadFrequently: true })
-  g.drawImage(img, 0, 0)
-  const data = g.getImageData(0, 0, c.width, c.height)
-  return { img, data, m: S.measure(data.data, c.width, c.height, 4, 3) }
+  const data = pixelsOf(img)
+  return { img, m: S.measure(data.data, data.width, data.height, 4, 3) }
 }
 export async function loadPictures(base = S.BASE) {
   const out = {}
@@ -36,9 +41,9 @@ export async function loadPictures(base = S.BASE) {
     out[dir] = { set: { frames, play: spec.play }, m: S.frameSetMeasure(frames, spec.play) }
   }))
   // An actor with arms: its picture split into the body and each arm.
-  for (const a of S.ACTORS) if (a.arms && out[a.pic] && !out[a.pic].parts) out[a.pic].parts = armParts(out[a.pic].data, out[a.pic].m, a.arms)
+  for (const a of S.ACTORS) if (a.arms && out[a.pic] && !out[a.pic].parts) out[a.pic].parts = armParts(pixelsOf(out[a.pic].img), out[a.pic].m, a.arms)
   // A reef piece with a `dark` inside (the cave): the hole in its picture, filled.
-  for (const o of S.SCENERY) if (o.dark && out[o.pic] && !out[o.pic].inner) out[o.pic].inner = innerOf(out[o.pic].data, out[o.pic].m, o.dark)
+  for (const o of S.SCENERY) if (o.dark && out[o.pic] && !out[o.pic].inner) out[o.pic].inner = innerOf(pixelsOf(out[o.pic].img), out[o.pic].m, o.dark)
   return out
 }
 
@@ -320,7 +325,7 @@ export class Stage {
       let src = p.img
       if (colour) {
         const id = `${a.pic}|${colour}`
-        if (!this.colours.has(id)) this.colours.set(id, recolour(p.data, a.body, colour))
+        if (!this.colours.has(id)) this.colours.set(id, recolour(pixelsOf(p.img), a.body, colour))
         src = this.colours.get(id)
       }
       sp = { c: prescale(src, m.w * k, m.h * k), k }

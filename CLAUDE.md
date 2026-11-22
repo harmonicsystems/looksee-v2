@@ -44,7 +44,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 94 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 93.0 KB now, 1 KB under: 60.3 at start, 20 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-22 from 92 to 94 for the aquarium's cove and shipwreck, the same day from 84 to 92 for the aquarium's five loops and two-faced cards, and on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
+  (`scripts/check-bundle-size.mjs`; 93.6 KB now, 0.4 KB under: 60.3 at start, 20.5 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-22 from 92 to 94 for the aquarium's cove and shipwreck, the same day from 84 to 92 for the aquarium's five loops and two-faced cards, and on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -475,6 +475,9 @@ where `check.mjs` proves every question true for its whole moment) and copied he
 check first and copies nothing if it fails. It changes two things: picture names end `.webp`, and
 `stage.js` takes its frame sets from `frames.js` instead of a `fetch`.
 
+- **Memory (2026-11-22):** the library's `stage.js` no longer keeps a second copy of every
+  picture's pixels after loading (about 31 MB, measured there). Not done, David's call: halving
+  the four biggest pictures (about 13 MB more) and a smaller canvas.
 - `Aquarium.svelte` is its place on the stage, **loaded the first time it is opened** (the only
   `import()` in the app). Leaving it cancels its frame loop.
 - **Each moment has a card with two faces** (`S.tell(moment, set, loop)`): something to say (the
@@ -488,14 +491,14 @@ check first and copies nothing if it fails. It changes two things: picture names
   so hiding it shifts nothing. Four ways out: its Close button, a click on the sea (which then
   does not freeze it), Esc (caught before the app's Esc, which leaves the aquarium) and Sea again.
 - Its bar: Freeze / Play, Next, Show answer (on the question face), Question / Something to say
-  (turns the card, and is remembered), and Sea (clownfish 1 to 5, the submarine's colour, speed,
+  (turns the card, and is remembered), and Sea (clownfish 1 to 10, the submarine's colour, speed,
   water, which face cards open on, and the loop: all in turn or one held; kept under
   `looksee-aquarium-v1`, not settings, in no link). A click on the sea freezes it; Space and → do
   the same as Freeze and Next. Next goes to the next moment, or the next one with a question while
   the question face shows. Reduced motion opens it frozen.
 - **The five loops cost 7 KB (2026-11-22).** The aquarium's own part went from 9.8 to 16.8 KB,
   nearly all of it `scene.js`, which is copied and not edited here. David raised the size gate
-  from 84 to 92 KB for it, and to 94 for the places; the app is 93.0 KB, so another loop will not fit without asking again
+  from 84 to 92 KB for it, and to 94 for the places; the app is 93.6 KB, so another loop will not fit without asking again
   or making the scene smaller in the library.
 - **Its check does not run in Looksee's tests** (it needs the library and ImageMagick); the hash
   test stands in for it.
