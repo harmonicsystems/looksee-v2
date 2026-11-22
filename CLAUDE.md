@@ -458,21 +458,32 @@ How Looksee, the picture library, sequence and Clip Choice fit together, and eve
 copied in from the library, is in `~/Code/picture-library/MAP.md`. `npm run tuning` there says
 whether the copies here still match.
 
-A two-minute sea loop to ask questions from (how many clownfish, over or under, fast or slow, what
-colour). **It is made and proved in David's picture library** (`~/Code/picture-library/projects/aquarium`,
+Five two-minute sea loops that take turns, to talk and ask about: Swimming past (how many, over or
+under, fast or slow, what colour), Hide and seek (place words), A school of fish (shapes, a number,
+a letter), Big and little, and One more. **It is made and proved in David's picture library** (`~/Code/picture-library/projects/aquarium`,
 where `check.mjs` proves every question true for its whole moment) and copied here by
 `npm run aquarium` (`scripts/aquarium.mjs`): `src/aquarium/` (never edit by hand; a test compares
-`scene.js` with the hash taken when the check passed) and 29 pictures as lossless WebP in
-`public/aquarium/` (1.7 MB, David's own, stored for offline use). The script runs the library's
+`scene.js` with the hash taken when the check passed) and 28 pictures as lossless WebP in
+`public/aquarium/` (2.6 MB, David's own, stored for offline use). The script runs the library's
 check first and copies nothing if it fails. It changes two things: picture names end `.webp`, and
 `stage.js` takes its frame sets from `frames.js` instead of a `fetch`.
 
 - `Aquarium.svelte` is its place on the stage, **loaded the first time it is opened** (the only
   `import()` in the app). Leaving it cancels its frame loop.
-- Its bar: Freeze / Play, Next question, Show answer, and Sea (clownfish 1 to 5, the submarine's
-  colour, speed, water; kept under `looksee-aquarium-v1`, not settings, in no link). A click on
-  the sea freezes it; Space and → do the same as Freeze and Next question. The question follows
-  the Words setting, and a click on it says it. Reduced motion opens it frozen.
+- **Each moment has a card with two faces** (`S.tell(moment, set, loop)`): something to say (the
+  word, a model sentence, a starter for the children) and the question, whose answer shows only
+  when asked for. A moment with no question has only the first face. The card follows the Words
+  setting, and a click on it says it.
+- Its bar: Freeze / Play, Next, Show answer (on the question face), Question / Something to say
+  (turns the card, and is remembered), and Sea (clownfish 1 to 5, the submarine's colour, speed,
+  water, which face cards open on, and the loop: all in turn or one held; kept under
+  `looksee-aquarium-v1`, not settings, in no link). A click on the sea freezes it; Space and → do
+  the same as Freeze and Next. Next goes to the next moment, or the next one with a question while
+  the question face shows. Reduced motion opens it frozen.
+- **The five loops put the app over the size gate (2026-11-22): 90.1 KB against 84.** The aquarium's
+  own part went from 9.8 to 16.8 KB, nearly all of it `scene.js`, which is copied and not edited
+  here. `npm test` passes; `npm run build` fails at the gate until David raises it or the scene
+  is made smaller in the library.
 - **Its check does not run in Looksee's tests** (it needs the library and ImageMagick); the hash
   test stands in for it.
 

@@ -35,7 +35,53 @@ export async function loadPictures(base = S.BASE) {
     const frames = await Promise.all(spec.frames.map(async (f) => ({ ...f, ...(await loadPicture(`${base}${dir}/${f.file}`)) })))
     out[dir] = { set: { frames, play: spec.play }, m: S.frameSetMeasure(frames, spec.play) }
   }))
+  // An actor with arms: its picture split into the body and each arm.
+  for (const a of S.ACTORS) if (a.arms && out[a.pic] && !out[a.pic].parts) out[a.pic].parts = armParts(out[a.pic].data, out[a.pic].m, a.arms)
   return out
+}
+
+// A picture in parts: each arm, then the body. A part is its own colour plus the
+// outline round it (everything drawn within `edge` pixels that is not another
+// part's colour), so two arms that share a line each keep it when they swing apart.
+function armParts(src, m, spec, edge = 12) {
+  const { width: w, height: h, data } = src
+  const { labels, arms } = S.splitArms(data, w, h, m, spec)
+  const part = (id) => {
+    let x0 = w, y0 = h, x1 = -1, y1 = -1
+    for (let i = 0; i < w * h; i++) if (labels[i] === id) { const x = i % w, y = (i - x) / w; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y }
+    x0 = Math.max(0, x0 - edge - 1); y0 = Math.max(0, y0 - edge - 1); x1 = Math.min(w - 1, x1 + edge + 1); y1 = Math.min(h - 1, y1 + edge + 1)
+    const pw = x1 - x0 + 1, ph = y1 - y0 + 1
+    let mine = new Uint8Array(pw * ph)
+    for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) if (labels[(y + y0) * w + x + x0] === id) mine[y * pw + x] = 1
+    for (let r = 0; r < edge; r++) {
+      const next = new Uint8Array(mine)
+      for (let y = 1; y < ph - 1; y++) for (let x = 1; x < pw - 1; x++) {
+        const i = y * pw + x, g = (y + y0) * w + x + x0
+        if (!mine[i] && !labels[g] && data[g * 4 + 3] > 0 && (mine[i - 1] || mine[i + 1] || mine[i - pw] || mine[i + pw])) next[i] = 1
+      }
+      mine = next
+    }
+    // Anything drawn that the part wholly encloses is part of it too (the eyes).
+    const out = new Uint8Array(pw * ph), stack = []
+    for (let x = 0; x < pw; x++) stack.push(x, (ph - 1) * pw + x)
+    for (let y = 0; y < ph; y++) stack.push(y * pw, y * pw + pw - 1)
+    while (stack.length) {
+      const i = stack.pop()
+      if (out[i] || mine[i]) continue
+      out[i] = 1
+      const x = i % pw
+      if (x > 0) stack.push(i - 1); if (x < pw - 1) stack.push(i + 1); if (i >= pw) stack.push(i - pw); if (i < pw * (ph - 1)) stack.push(i + pw)
+    }
+    for (let i = 0; i < pw * ph; i++) if (!out[i]) mine[i] = 1
+    const c = newCanvas(pw, ph), img = new ImageData(pw, ph)
+    for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) if (mine[y * pw + x]) {
+      const p = (y * pw + x) * 4, q = ((y + y0) * w + x + x0) * 4
+      img.data[p] = data[q]; img.data[p + 1] = data[q + 1]; img.data[p + 2] = data[q + 2]; img.data[p + 3] = data[q + 3]
+    }
+    c.getContext('2d').putImageData(img, 0, 0)
+    return { c, x: x0, y: y0 }
+  }
+  return { arms: arms.map((a, i) => ({ ...part(i + 2), px: a.px, py: a.py })), body: part(1) }
 }
 
 // The submarine in another colour: its body colour replaced at the core, and the
@@ -120,8 +166,9 @@ export class Stage {
   X(x) { return this.ox + x * this.sw }
   Y(y) { return this.oy + y * this.sh }
 
-  // The water, the far dune, the sand and the reef pieces that keep still: drawn once
-  // per size and water.
+  // The water, the far dune and the sand: drawn once per size and water. The reef
+  // pieces are drawn each frame, in order with the actors, so the whale can pass
+  // behind them all.
   background(water) {
     if (this.bg && this.water === water) return this.bg
     const W = this.canvas.width, H = this.canvas.height
@@ -148,11 +195,6 @@ export class Stage {
     g.beginPath()
     for (let i = 0; i <= 160; i++) { const x = x0 + (x1 - x0) * i / 160; g[i ? 'lineTo' : 'moveTo'](this.X(x), this.Y(edge(x))) }
     g.strokeStyle = S.INK.outline; g.lineWidth = this.ow; g.lineJoin = 'round'; g.stroke()
-    // The reef pieces that keep still stand on the sand.
-    for (const o of S.SCENERY.filter((o) => o.pic && !o.sway).sort((p, q) => p.z - q.z)) {
-      const m = this.pics[o.pic].m, { c: sp, k } = this.sprite(o)
-      g.drawImage(sp, this.X(o.x) - (m.box.x + m.box.w / 2) * k, this.Y(o.base) - (m.box.y + m.box.h) * k)
-    }
     this.bg = c; this.water = water
     return c
   }
@@ -205,6 +247,13 @@ export class Stage {
     }
   }
 
+  // A reef picture that keeps still but is drawn in order with the actors, so they
+  // can go behind it (the chest, the arch).
+  stillPic(g, o) {
+    const m = this.pics[o.pic].m, { c, k } = this.sprite(o)
+    g.drawImage(c, Math.round(this.X(o.x) - (m.box.x + m.box.w / 2) * k), Math.round(this.Y(o.base) - (m.box.y + m.box.h) * k))
+  }
+
   // A picture at the size this actor is drawn, in the colour asked for.
   sprite(a, colour) {
     const p = this.pics[a.pic], m = p.m
@@ -213,9 +262,10 @@ export class Stage {
     let sp = this.sprites.get(key)
     if (!sp) {
       let src = p.img
-      if (colour && colour !== S.BODY) {
-        if (!this.colours.has(colour)) this.colours.set(colour, recolour(p.data, S.BODY, colour))
-        src = this.colours.get(colour)
+      if (colour) {
+        const id = `${a.pic}|${colour}`
+        if (!this.colours.has(id)) this.colours.set(id, recolour(p.data, a.body, colour))
+        src = this.colours.get(id)
       }
       sp = { c: prescale(src, m.w * k, m.h * k), k }
       this.sprites.set(key, sp)
@@ -241,7 +291,7 @@ export class Stage {
       c = this.frameSprite(key, i, f, k)
       cx = f.ax * k; cy = f.ay * k
     } else {
-      const colour = a.pic === 'sub' ? S.colourOf(S.subColour(s, loop)).hex : null;
+      const colour = S.tintOf(a, s, loop);
       ({ c, k } = this.sprite(a, colour))
       cx = (m.box.x + m.box.w / 2) * k
       cy = (a.foot ? m.box.y + m.box.h : m.box.y + m.box.h / 2) * k
@@ -252,7 +302,7 @@ export class Stage {
     g.save()
     g.translate(this.X(pose.x), this.Y(pose.y))
     g.rotate(pose.rot)
-    g.scale(pose.sx * ex, ey)
+    g.scale(pose.sx * ex * pose.size, ey * pose.size)
     if (a.rig === 'fish' && !p.set) {
       // The tail turns toward us and away: everything behind where it starts
       // narrows and widens.
@@ -260,15 +310,49 @@ export class Stage {
       const q = 1 - 0.42 * (0.5 - 0.5 * Math.cos(TAU * pose.phase))
       g.drawImage(c, 0, 0, xt + 1, c.height, -cx, -cy, xt + 1, c.height)
       g.drawImage(c, xt, 0, c.width - xt, c.height, -cx + xt, -cy, (c.width - xt) * q, c.height)
+    } else if (a.arms && p.parts) {
+      // Each arm turned about its root, then the body over where they join.
+      const piece = (q, i) => {
+        const id = `${a.pic}|part${i}|${k.toFixed(4)}`
+        let sp = this.sprites.get(id)
+        if (!sp) { sp = prescale(q.c, q.c.width * k, q.c.height * k); this.sprites.set(id, sp) }
+        return sp
+      }
+      p.parts.arms.forEach((q, i) => {
+        g.save()
+        g.translate(-cx + q.px * k, -cy + q.py * k)
+        g.rotate(S.armAngle(a, i, t))
+        g.drawImage(piece(q, i), (q.x - q.px) * k, (q.y - q.py) * k)
+        g.restore()
+      })
+      g.drawImage(piece(p.parts.body, 'body'), -cx + p.parts.body.x * k, -cy + p.parts.body.y * k)
+    } else if (a.rig === 'jelly' && a.hang && !p.set) {
+      // The bell in one piece; the strands below it in bands, each sheared to meet
+      // the next, swinging further toward their ends, the swing running down them.
+      const top = Math.round(m.box.y * k), bottom = Math.round((m.box.y + m.box.h) * k), split = Math.round(top + a.hang * (bottom - top))
+      const ph = S.wrap((a.sway || 30) * t / S.LOOP + (a.seed || 0), 1), amp = 0.05 * m.box.w * k
+      const off = (u) => amp * u * Math.sin(TAU * ph - 2.2 * u)
+      g.drawImage(c, 0, 0, c.width, split, -cx, -cy, c.width, split)
+      const N = 10
+      for (let b = 0; b < N; b++) {
+        const y0 = split + (bottom - split) * b / N, y1 = split + (bottom - split) * (b + 1) / N
+        const d0 = off(b / N), d1 = off((b + 1) / N), kx = (d1 - d0) / (y1 - y0)
+        g.save()
+        g.translate(-cx, -cy)
+        g.transform(1, 0, kx, 1, d0 - kx * y0, 0)
+        const sy = Math.floor(y0), sh = Math.min(c.height, Math.ceil(y1) + 1) - sy
+        g.drawImage(c, 0, sy, c.width, sh, 0, sy, c.width, sh)
+        g.restore()
+      }
     } else {
       g.drawImage(c, -cx, -cy)
     }
     g.restore()
   }
 
-  bubbles(g, t, s) {
+  bubbles(g, t, s, loop) {
     g.lineWidth = Math.max(1, this.ow * 0.7)
-    for (const b of S.bubblesAt(t, s, this.measures)) {
+    for (const b of S.bubblesAt(t, s, this.measures, loop)) {
       const x = this.X(b.x), y = this.Y(b.y), r = b.r * this.sh
       g.beginPath(); g.arc(x, y, r, 0, TAU)
       g.fillStyle = 'rgba(243, 248, 246, 0.22)'; g.fill()
@@ -283,14 +367,15 @@ export class Stage {
     const g = this.g
     g.drawImage(this.background(s.water), 0, 0)
     const items = [
-      ...S.SCENERY.filter((o) => o.kind === 'weed' || o.sway).map((o) => ({ z: o.z, o })),
-      ...S.cast(s).map((a, i) => ({ z: a.z + i * 1e-4, a })),
+      ...S.SCENERY.map((o) => ({ z: S.reefZ(o), o })),
+      ...S.cast(s, loop).map((a, i) => ({ z: S.zAt(a, t) + i * 1e-4, a })),
     ].sort((p, q) => p.z - q.z)
     for (const it of items) {
       if (it.a) this.actor(g, it.a, t, s, loop)
       else if (it.o.kind === 'weed') this.weed(g, it.o, t)
-      else this.swayPic(g, it.o, t)
+      else if (it.o.sway) this.swayPic(g, it.o, t)
+      else this.stillPic(g, it.o)
     }
-    this.bubbles(g, t, s)
+    this.bubbles(g, t, s, loop)
   }
 }

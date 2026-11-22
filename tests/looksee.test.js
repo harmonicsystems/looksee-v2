@@ -1204,16 +1204,28 @@ describe('the aquarium', () => {
     expect(createHash('sha256').update(readFileSync(at('src/aquarium/scene.js'), 'utf8')).digest('hex')).toBe(scene)
   })
   it('has every picture it names, and no others', () => {
-    const want = [...Object.values(SEA.PICS), ...Object.entries(FRAMES).flatMap(([dir, f]) => f.frames.map((x) => `${dir}/${x.file}`))].sort()
+    // Two names may share a picture (the school of fish and the butterflyfish).
+    const want = [...new Set([...Object.values(SEA.PICS), ...Object.entries(FRAMES).flatMap(([dir, f]) => f.frames.map((x) => `${dir}/${x.file}`))])].sort()
     const walk = (dir) => readdirSync(at(dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]))
     expect(walk('public/aquarium').map((f) => f.slice('public/aquarium/'.length)).sort()).toEqual(want)
     expect(new Set(SEA.ACTORS.filter((a) => a.frames).map((a) => a.frames))).toEqual(new Set(Object.keys(FRAMES)))
   })
-  it('asks and answers every question in English and Spanish', () => {
-    for (const m of SEA.MOMENTS) {
-      const a = m.answer(SEA.DEFAULTS, 0)
-      for (const x of [m.ask, a]) expect(x.en && x.es, m.id).toBeTruthy()
-    }
+  it('has a card in English and Spanish for every moment of every loop', () => {
+    SEA.LOOPS.forEach((loop, n) => {
+      const all = SEA.momentsOf({ ...SEA.DEFAULTS, loops: loop.id }, n)
+      expect(all.length, loop.id).toBeGreaterThan(0)
+      for (const m of all) {
+        const c = SEA.tell(m, SEA.DEFAULTS, n)
+        for (const x of [c.word, c.say, c.start]) expect(x.en && x.es, m.id).toBeTruthy()
+        // A question and its answer come together, or not at all.
+        expect(!!c.ask, m.id).toBe(!!c.answer)
+        if (c.ask) for (const x of [c.ask, c.answer]) expect(x.en && x.es, m.id).toBeTruthy()
+      }
+    })
+  })
+  it('plays the loops in turn, or holds one', () => {
+    expect(SEA.LOOPS.map((l, n) => SEA.loopOf(SEA.DEFAULTS, n))).toEqual(SEA.LOOPS.map((l) => l.id))
+    expect(SEA.loopOf({ ...SEA.DEFAULTS, loops: 'hide' }, 3)).toBe('hide')
   })
 })
 
