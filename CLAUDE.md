@@ -481,6 +481,12 @@ check first and copies nothing if it fails. It changes two things: picture names
   word, a model sentence, a starter for the children) and the question, whose answer shows only
   when asked for. A moment with no question has only the first face. The card follows the Words
   setting, and a click on it says it.
+- **The card is kept short** (David, 2026-11-22: it covered too much of the sea): both languages
+  share a line for the word, the starter and the answer (`pair`), and the type is smaller.
+- **Sea opens as a panel beside the dock**, in the same glass, full height, one choice per row with
+  its name above. It lies over the left of the sea and nothing else moves; the Loop row is last,
+  so hiding it shifts nothing. Four ways out: its Close button, a click on the sea (which then
+  does not freeze it), Esc (caught before the app's Esc, which leaves the aquarium) and Sea again.
 - Its bar: Freeze / Play, Next, Show answer (on the question face), Question / Something to say
   (turns the card, and is remembered), and Sea (clownfish 1 to 5, the submarine's colour, speed,
   water, which face cards open on, and the loop: all in turn or one held; kept under

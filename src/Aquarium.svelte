@@ -153,24 +153,39 @@
   })
 </script>
 
+<!-- Both languages on one line, to keep the card short. -->
+{#snippet pair(x)}{#each lines(x) as l, i (l.lang)}{i ? ' · ' : ''}<span lang={l.lang}>{l.text}</span>{/each}{/snippet}
+
+<!-- Esc closes the Sea panel first, before the app's own Esc leaves the aquarium. -->
+<svelte:window
+  onkeydowncapture={(e) => {
+    if (more && e.key === 'Escape') {
+      more = false
+      e.stopImmediatePropagation()
+    }
+  }}
+/>
+
 <section class="sea" aria-label="Aquarium">
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <canvas bind:this={canvas} onclick={freeze} title="Click to freeze"></canvas>
+  <canvas bind:this={canvas} onclick={() => (more ? (more = false) : freeze())} title={more ? 'Click to close' : 'Click to freeze'}></canvas>
   {#if failed}<p class="card" role="status">The aquarium's pictures could not be loaded.</p>{/if}
   {#if c}
     <button class="card" onclick={() => speak(lines(asking ? (open ? c.answer : c.ask) : c.say))} title="Click to hear it">
       {#if asking}
         {#each lines(c.ask) as l (l.lang)}<span lang={l.lang}>{l.text}</span>{/each}
-        {#if open}{#each lines(c.answer) as l (l.lang)}<b lang={l.lang}>{l.text}</b>{/each}{/if}
+        {#if open}<b>{@render pair(c.answer)}</b>{/if}
       {:else}
-        {#each lines(c.word) as l (l.lang)}<b lang={l.lang}>{l.text}</b>{/each}
+        <b>{@render pair(c.word)}</b>
         {#each lines(c.say) as l (l.lang)}<span lang={l.lang}>{l.text}</span>{/each}
-        {#each lines(c.start) as l (l.lang)}<i lang={l.lang}>{l.text}</i>{/each}
+        <i>{@render pair(c.start)}</i>
       {/if}
     </button>
   {/if}
   {#if more}
-    <div class="opts">
+    <!-- The sea's choices: a panel beside the dock, the same glass, so nothing on the sea moves. -->
+    <div class="opts" role="group" aria-label="Sea">
+      <div class="row head"><b>Sea</b><button class="btn" onclick={() => (more = false)}>Close</button></div>
       {#each Object.entries(S.CHOICES) as [k, all] (k)}
         <!-- Only the loops of the place showing; no row where the place has one loop. -->
         {@const vs = k === 'loops' ? ['turn', ...S.loopsAt(set.place).map((l) => l.id)] : all}
@@ -196,16 +211,18 @@
 <style>
   .sea { position: absolute; z-index: 2; inset: var(--bar-h) var(--inset-r) var(--inset-b) calc(var(--inset-l) - var(--under)); background: var(--stage-bg); }
   canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
-  .card, .opts { position: absolute; left: calc(50% + var(--under) / 2); translate: -50%; max-width: calc(92% - var(--under)); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; font-family: var(--font); }
-  .card { top: 16px; padding: 10px 22px; display: grid; gap: 2px; font-size: clamp(18px, 2.6vw, 34px); font-weight: 700; text-align: center; cursor: pointer; }
+  .card { position: absolute; top: 12px; left: calc(50% + var(--under) / 2); translate: -50%; max-width: calc(92% - var(--under)); padding: 6px 18px; display: grid; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; font-family: var(--font); font-size: clamp(15px, 1.8vw, 26px); line-height: 1.25; font-weight: 700; text-align: center; cursor: pointer; }
   .card b { color: var(--brand); }
+  .card b span, .card i span { display: inline; }
   .card i { font-style: normal; font-weight: 400; font-size: 0.8em; }
-  .opts { bottom: 84px; padding: 12px; display: grid; gap: 8px; }
+  .opts { position: absolute; z-index: 1; top: 0; bottom: 0; left: var(--under); width: min(276px, 100%); padding: 12px; overflow: auto; display: grid; align-content: start; gap: 14px; background: color-mix(in srgb, var(--bg) 85%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--ink); border-right: 1px solid var(--line); font-family: var(--font); }
   .row[hidden] { display: none; }
-  .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .row span { min-width: 8em; font-weight: 700; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .row > span { flex-basis: 100%; font-size: 13px; }
+  .head { justify-content: space-between; align-items: center; }
   .row .btn { min-height: 44px; min-width: 44px; }
-  .row [aria-pressed='true'] { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .row [aria-pressed='true'] { background: var(--pick); border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+  .row .sw[aria-pressed='true'] { outline: 3px solid var(--brand); outline-offset: 2px; }
   .bar { position: absolute; left: var(--under); right: 0; bottom: 18px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
   .bar .btn { min-height: 52px; padding-inline: 20px; font-size: 17px; }
   :global(.look.quiet) .bar:not(:has(:focus-visible)) { opacity: 0; pointer-events: none; }
