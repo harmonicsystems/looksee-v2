@@ -37,7 +37,55 @@ export async function loadPictures(base = S.BASE) {
   }))
   // An actor with arms: its picture split into the body and each arm.
   for (const a of S.ACTORS) if (a.arms && out[a.pic] && !out[a.pic].parts) out[a.pic].parts = armParts(out[a.pic].data, out[a.pic].m, a.arms)
+  // A reef piece with a `dark` inside (the cave): the hole in its picture, filled.
+  for (const o of S.SCENERY) if (o.dark && out[o.pic] && !out[o.pic].inner) out[o.pic].inner = innerOf(out[o.pic].data, out[o.pic].m, o.dark)
   return out
+}
+
+// The inside of a picture with an opening at its foot (the cave's mouth) or holes
+// right through it (the ship's windows): every clear pixel that cannot be reached
+// from the picture's edge without passing under its bottom line, filled with one flat colour and grown a few pixels under the
+// outline so no gap shows between the two.
+function innerOf(src, m, hex, grow = 3, least = 0.003) {
+  const { width: w, height: h, data } = src, bottom = m.box.y + m.box.h - 1
+  const clear = (i) => data[i * 4 + 3] <= 127
+  const outside = new Uint8Array(w * h), stack = []
+  for (let x = 0; x < w; x++) stack.push(x)
+  for (let y = 0; y < bottom; y++) stack.push(y * w, y * w + w - 1)
+  while (stack.length) {
+    const i = stack.pop()
+    if (outside[i] || !clear(i) || i >= bottom * w) continue
+    outside[i] = 1
+    const x = i % w
+    if (x > 0) stack.push(i - 1); if (x < w - 1) stack.push(i + 1); if (i >= w) stack.push(i - w); stack.push(i + w)
+  }
+  let inner = new Uint8Array(w * h)
+  for (let i = 0; i < bottom * w; i++) if (clear(i) && !outside[i]) inner[i] = 1
+  for (let x = 0; x < w; x++) if (inner[(bottom - 1) * w + x]) inner[bottom * w + x] = 1
+  // Small gaps (between a ship's rail posts) stay clear: only a hole bigger than
+  // `least` of the drawing is an inside.
+  const seen = new Uint8Array(w * h)
+  for (let s0 = 0; s0 < w * h; s0++) {
+    if (!inner[s0] || seen[s0]) continue
+    const piece = [s0]; seen[s0] = 1
+    for (let k = 0; k < piece.length; k++) {
+      const i = piece[k], x = i % w
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < w * h && inner[j] && !seen[j]) { seen[j] = 1; piece.push(j) }
+    }
+    if (piece.length < least * m.box.w * m.box.h) for (const i of piece) inner[i] = 0
+  }
+  for (let r = 0; r < grow; r++) {
+    const next = new Uint8Array(inner)
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x
+      if (!inner[i] && !clear(i) && (inner[i - 1] || inner[i + 1] || inner[i - w] || inner[i + w])) next[i] = 1
+    }
+    inner = next
+  }
+  const c = newCanvas(w, h), img = new ImageData(w, h), rgb = hexRgb(hex)
+  for (let i = 0; i < w * h; i++) if (inner[i]) { img.data[i * 4] = rgb[0]; img.data[i * 4 + 1] = rgb[1]; img.data[i * 4 + 2] = rgb[2]; img.data[i * 4 + 3] = 255 }
+  c.getContext('2d').putImageData(img, 0, 0)
+  return c
 }
 
 // A picture in parts: each arm, then the body. A part is its own colour plus the
@@ -254,6 +302,14 @@ export class Stage {
     g.drawImage(c, Math.round(this.X(o.x) - (m.box.x + m.box.w / 2) * k), Math.round(this.Y(o.base) - (m.box.y + m.box.h) * k))
   }
 
+  // The dark inside of a reef piece, drawn further back than the piece itself.
+  innerPic(g, o) {
+    const p = this.pics[o.pic], m = p.m, k = (o.h * this.sh) / m.box.h, id = `${o.pic}|inner|${k.toFixed(4)}`
+    let c = this.sprites.get(id)
+    if (!c) { c = prescale(p.inner, m.w * k, m.h * k); this.sprites.set(id, c) }
+    g.drawImage(c, Math.round(this.X(o.x) - (m.box.x + m.box.w / 2) * k), Math.round(this.Y(o.base) - (m.box.y + m.box.h) * k))
+  }
+
   // A picture at the size this actor is drawn, in the colour asked for.
   sprite(a, colour) {
     const p = this.pics[a.pic], m = p.m
@@ -366,12 +422,15 @@ export class Stage {
   draw(t, s, loop = 0) {
     const g = this.g
     g.drawImage(this.background(s.water), 0, 0)
+    const floor = S.sceneryAt(s, loop)
     const items = [
-      ...S.SCENERY.map((o) => ({ z: S.reefZ(o), o })),
+      ...floor.map((o) => ({ z: S.reefZ(o), o })),
+      ...floor.filter((o) => o.dark).map((o) => ({ z: o.back, o, inner: true })),
       ...S.cast(s, loop).map((a, i) => ({ z: S.zAt(a, t) + i * 1e-4, a })),
     ].sort((p, q) => p.z - q.z)
     for (const it of items) {
       if (it.a) this.actor(g, it.a, t, s, loop)
+      else if (it.inner) this.innerPic(g, it.o)
       else if (it.o.kind === 'weed') this.weed(g, it.o, t)
       else if (it.o.sway) this.swayPic(g, it.o, t)
       else this.stillPic(g, it.o)

@@ -1223,9 +1223,17 @@ describe('the aquarium', () => {
       }
     })
   })
-  it('plays the loops in turn, or holds one', () => {
-    expect(SEA.LOOPS.map((l, n) => SEA.loopOf(SEA.DEFAULTS, n))).toEqual(SEA.LOOPS.map((l) => l.id))
+  it("plays a place's loops in turn, or holds one", () => {
+    // Every loop belongs to a place, and a place's loops take turns among themselves.
+    expect(SEA.PLACES.flatMap((p) => SEA.loopsAt(p.id))).toEqual(SEA.LOOPS)
+    for (const p of SEA.PLACES) {
+      const at = SEA.loopsAt(p.id).map((l) => l.id)
+      expect(at.length, p.id).toBeGreaterThan(0)
+      expect([...at, ...at].map((l, n) => SEA.loopOf({ ...SEA.DEFAULTS, place: p.id }, n))).toEqual([...at, ...at])
+    }
     expect(SEA.loopOf({ ...SEA.DEFAULTS, loops: 'hide' }, 3)).toBe('hide')
+    // A held loop says which place it is, whatever `place` says.
+    expect(SEA.placeAt({ ...SEA.DEFAULTS, place: 'reef', loops: 'ship' }, 2)).toBe('wreck')
   })
 })
 

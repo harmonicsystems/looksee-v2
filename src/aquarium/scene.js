@@ -49,6 +49,12 @@ export const PICS = {
   angel: 'props/sea/angelfish.webp',
   whale: 'props/sea/humpback.webp',          // one big picture (props/sea/P4-humpback)
   visitor: 'props/sea/butterflyfish.webp',   // the same fish, counted apart from the school and the line
+  // the cove's own rocks (props/sea/P7-rocks)
+  ledge: 'props/sea/rock-ledge.webp',
+  cave: 'props/sea/rock-cave.webp',
+  // the shipwreck's own pieces (props/sea/P8-wreck)
+  ship: 'props/sea/shipwreck.webp',
+  anchor: 'props/sea/anchor.webp',
 }
 
 // Colours the page draws with, matched to the pictures (outline, cream, sage, tan).
@@ -74,20 +80,37 @@ export const colourOf = (id) => COLOURS.find((c) => c.id === id) || COLOURS[0]
 // moves differently in a loop says how in `also: { <loop>: { keys, … } }`. Where
 // the loops join, everything in sight is in the same place in all of them
 // (check.mjs proves it), so any loop can follow any other.
+//
+// The places. A place is a sea floor of its own, with the same animals living in it.
+// Each loop happens `at` one place; the `place` setting chooses which place's loops
+// take turns. Going from one place to another is not seamless (the floor changes),
+// so the page fades; the join is proved between the loops of one place.
+export const PLACES = [
+  { id: 'reef', en: 'The reef' },
+  { id: 'cove', en: 'The cove' },
+  { id: 'wreck', en: 'The shipwreck' },
+]
 export const LOOPS = [
-  { id: 'past', en: 'Swimming past' },
-  { id: 'hide', en: 'Hide and seek' },
-  { id: 'school', en: 'A school of fish' },
-  { id: 'size', en: 'Big and little' },
-  { id: 'more', en: 'One more' },
+  { id: 'past', at: 'reef', en: 'Swimming past' },
+  { id: 'hide', at: 'reef', en: 'Hide and seek' },
+  { id: 'school', at: 'reef', en: 'A school of fish' },
+  { id: 'size', at: 'reef', en: 'Big and little' },
+  { id: 'more', at: 'reef', en: 'One more' },
+  { id: 'rocks', at: 'cove', en: 'Rocks and shells' },
+  { id: 'ship', at: 'wreck', en: 'The sunken ship' },
 ]
 // `card` is the face a moment's card opens on: something to say, or the question.
-export const DEFAULTS = { clownfish: 3, sub: 'yellow', speed: 1, water: 'light', card: 'say', loops: 'turn' }
-export const CHOICES = { clownfish: [1, 2, 3, 4, 5], sub: [...COLOURS.map((c) => c.id), 'each'], speed: [0.5, 1], water: ['light', 'deep'], card: ['say', 'ask'], loops: ['turn', ...LOOPS.map((l) => l.id)] }
+export const DEFAULTS = { clownfish: 3, sub: 'yellow', speed: 1, water: 'light', card: 'say', place: 'reef', loops: 'turn' }
+export const CHOICES = { clownfish: [1, 2, 3, 4, 5], sub: [...COLOURS.map((c) => c.id), 'each'], speed: [0.5, 1], water: ['light', 'deep'], card: ['say', 'ask'], place: PLACES.map((p) => p.id), loops: ['turn', ...LOOPS.map((l) => l.id)] }
 const mod = (n, m) => ((n % m) + m) % m
 // Which loop plays as loop number n, and how many times it has played before.
-export const loopOf = (s, n = 0) => (LOOPS.some((l) => l.id === s.loops) ? s.loops : LOOPS[mod(n, LOOPS.length)].id)
-export const visitOf = (s, n = 0) => (LOOPS.some((l) => l.id === s.loops) ? n : Math.floor(n / LOOPS.length))
+// A loop held by the `loops` setting decides the place too.
+export const loopsAt = (place) => LOOPS.filter((l) => l.at === place)
+const turns = (s) => loopsAt(PLACES.some((p) => p.id === s.place) ? s.place : PLACES[0].id)
+export const loopOf = (s, n = 0) => (LOOPS.some((l) => l.id === s.loops) ? s.loops : turns(s)[mod(n, turns(s).length)].id)
+export const visitOf = (s, n = 0) => (LOOPS.some((l) => l.id === s.loops) ? n : Math.floor(n / turns(s).length))
+export const placeOf = (id) => LOOPS.find((l) => l.id === id).at
+export const placeAt = (s, n = 0) => placeOf(loopOf(s, n))
 export const subColour = (s, loop) => (s.sub === 'each' ? COLOURS[mod(visitOf(s, loop), 6)].id : s.sub)
 
 // The teacher's strip covers the left of the screen while it shows (a quarter of
@@ -108,8 +131,8 @@ const LAPS = [ // centre x, centre y, reach x (widths), reach y (heights), secon
   [0.81, 0.53, 0.08, 0.07, 20, 1, 1],
 ]
 const COUNT = [2, 12]                     // the clownfish hold still for counting
-function clownKeys(i) {
-  const [x, y] = SPOTS[i], [cx, cy, rx, ry, lap, way, at] = LAPS[i]
+function clownKeys(i, spots = SPOTS, laps = LAPS) {
+  const [x, y] = spots[i], [cx, cy, rx, ry, lap, way, at] = laps[i]
   const keys = [[COUNT[0], x, y], [COUNT[1], x, y]]
   for (let k = 0, t = COUNT[1] + 2; t <= LOOP - 2; k++, t += lap / 4) {
     const q = at + way * k
@@ -129,6 +152,21 @@ function clownHide(i) {
     depth: [[0, 5], [out, 3.9], [back, 5]],
   }
 }
+
+// The cove: their anemone is nearer the right edge, so they lap it more tightly and
+// are counted in the open water above it.
+const COVE_SPOTS = [[0.80, 0.52], [0.94, 0.52], [0.87, 0.36], [0.73, 0.36], [0.94, 0.20]]
+const COVE_LAPS = [
+  [0.895, 0.56, 0.05, 0.08, 8, 1, 0],
+  [0.90, 0.50, 0.045, 0.10, 10, -1, 1],
+  [0.89, 0.60, 0.055, 0.06, 12, 1, 2],
+  [0.905, 0.54, 0.04, 0.09, 15, -1, 3],
+  [0.885, 0.48, 0.05, 0.07, 20, 1, 1],
+]
+
+// The shipwreck: the anemone is where it is in the cove; the first spot is a little
+// further from the ship's stern.
+const WRECK_SPOTS = [[0.82, 0.53], ...COVE_SPOTS.slice(1)]
 
 // ---- A school of fish: twelve small fish that swim in, make a shape, hold it, loosen
 // and make the next. A shape is twelve spots, one a fish, spaced evenly along its
@@ -179,6 +217,34 @@ const clownMore = (i) => { const k = clownKeys(i); return { keys: [k[0], [53, k[
 const TRIO = ['red', 'yellow', 'blue'], ORDERS = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [2, 1, 0], [1, 0, 2]]
 export const lineColour = (i, s, loop) => TRIO[ORDERS[mod(visitOf(s, loop), ORDERS.length)][i]]
 
+// The cove's fixed points, used by its pieces and by whoever goes to them: the arch's
+// middle; the flat rock's middle and its top, where the crab's feet go; the middle of
+// the cave's mouth, where the little fish shows.
+const ARCH_X = 0.357, LEDGE_H = 0.055, LEDGE = [0.497, SAND + 0.035 - LEDGE_H], CAVE = [0.619, 0.822]
+
+// The shipwreck's fixed points. The ship stands on the sand, its hole in the right half
+// of its hull: HOLE is the hole's middle, where the little fish shows, from the
+// `mouth` the ship's piece gives (shares of its drawing). OUT is where the fish holds
+// outside, beyond the stern. The anchor stands left of the ship, with open water all
+// round it: ROUND is how far either side of its middle a fish turns when it swims
+// around it, and BESIDE where the crab stands next to it.
+const SHIP = { x: 0.625, h: 0.50, w: (977 / 741) * 0.50 / A, mouth: { l: 0.620, r: 0.749, t: 0.723, b: 0.856 } }
+const HOLE = [SHIP.x + ((SHIP.mouth.l + SHIP.mouth.r) / 2 - 0.5) * SHIP.w, SAND + 0.035 - SHIP.h + (SHIP.mouth.t + SHIP.mouth.b) / 2 * SHIP.h]
+const OUT = [0.85, 0.79]
+const ANCHOR = { x: 0.35, base: SAND + 0.06, h: 0.18 }, ROUND = 0.067, BESIDE = [0.44, 0.93]
+// Around: from the right of the anchor, across in front of it, back behind it, twice.
+// It changes depth at each end, in the open.
+const ROUND_AT = 47.5, HALF = 3
+const roundKeys = () => {
+  const keys = [[40, 1.25, 0.20]]
+  for (let k = 0; k < 4; k++) {
+    const t = ROUND_AT + k * HALF, back = k % 2
+    keys.push([t, ANCHOR.x + (back ? -ROUND : ROUND), 0.80], [t + HALF / 2, ANCHOR.x, back ? 0.785 : 0.815])
+  }
+  keys.push([ROUND_AT + 4 * HALF, ANCHOR.x + ROUND, 0.80], [68, 1.25, 0.25], [68, 1.25, 0.20])
+  return keys
+}
+
 // ---- Everyone. z orders the drawing (higher is in front); `depth` [[t, z], …]
 // changes it at those times, each z holding until the next. Rigs: fish (tail swish
 // and bob), glide (slow tilt and bob), float (the submarine), jelly (pulse), walk
@@ -187,7 +253,7 @@ export const lineColour = (i, s, loop) => TRIO[ORDERS[mod(visitOf(s, loop), ORDE
 // settings and the loop).
 export const ACTORS = [
   ...LAPS.map((_, i) => ({ id: `clown${i + 1}`, pic: 'clown', name: { en: 'clownfish', es: 'pez payaso' }, fish: true, n: i + 1,
-    h: 0.11, z: 5, rig: 'fish', flick: 150 + 12 * i, bobs: 22 + i, seed: i * 0.23, keys: clownKeys(i), also: { hide: clownHide(i), more: clownMore(i) } })),
+    h: 0.11, z: 5, rig: 'fish', flick: 150 + 12 * i, bobs: 22 + i, seed: i * 0.23, keys: clownKeys(i), also: { hide: clownHide(i), more: clownMore(i), rocks: { keys: clownKeys(i, COVE_SPOTS, COVE_LAPS) }, ship: { keys: clownKeys(i, WRECK_SPOTS, COVE_LAPS) } } })),
 
   // ---- Swimming past.
   // Over (24–32) and under (80–88): both slow to a crawl going the same way, the
@@ -256,6 +322,29 @@ export const ACTORS = [
   { id: 'whale', in: 'hide', pic: 'whale', name: { en: 'whale', es: 'ballena' }, h: 0.88, z: 0.2, rig: 'glide', bobs: 6, seed: 0.2,
     keys: [[97, 1.72, 0.37], [119, -0.72, 0.37], [119, 1.72, 0.37]] },
 
+  // ---- The cove: Rocks and shells.
+  // In (90–98): a little yellow fish comes down behind the cave's rock, out of sight,
+  // and shows in its mouth; it leaves the way it came.
+  { id: 'peek', in: 'rocks', pic: 'butterfly', name: { en: 'yellow fish', es: 'pez amarillo' }, fish: true, h: 0.055, z: 1.5, rig: 'fish', flick: 120, bobs: 24, seed: 0.3,
+    body: '#c1a1a5', tint: 'yellow',
+    keys: [[76, 1.25, 0.30], [84, 0.70, 0.50], [89, CAVE[0], CAVE[1]], [99, CAVE[0], CAVE[1]], [103, 0.62, 0.60], [113, 1.25, 0.35], [113, 1.25, 0.30]] },
+
+  // ---- The shipwreck: The sunken ship.
+  // High and low (30–38): one picture twice, one near the top of the water and one
+  // near the sea floor, in the open water between the anchor and the ship.
+  ...[['high', 0.15], ['low', 0.65]].map(([id, y], i) => ({ id, in: 'ship', pic: 'butterfly', name: { en: 'fish', es: 'pez' }, fish: true, h: 0.08, z: 6, rig: 'fish', flick: 110, bobs: 22 + 2 * i, seed: 0.2 + 0.3 * i,
+    body: '#c1a1a5', tint: 'green', keys: [[23, 1.28, y], [30, 0.395, y], [38, 0.375, y], [46, 1.28, y - 0.02], [46, 1.28, y]] })),
+  // Around (48–59): a blue fish swims twice round the anchor: in front of it one way,
+  // behind it the other.
+  { id: 'round', in: 'ship', pic: 'butterfly', name: { en: 'blue fish', es: 'pez azul' }, fish: true, h: 0.055, z: 6, rig: 'fish', flick: 130, bobs: 24, seed: 0.5,
+    body: '#c1a1a5', tint: 'blue', keys: roundKeys(),
+    depth: [[0, 6], [ROUND_AT + HALF, 1.6], [ROUND_AT + 2 * HALF, 6], [ROUND_AT + 3 * HALF, 1.6], [ROUND_AT + 4 * HALF, 6]] },
+  // Inside (74–82) and outside (88–97): a little yellow fish goes in behind the stern,
+  // shows in the hole in the hull, and comes out the way it went in.
+  { id: 'peep', in: 'ship', pic: 'butterfly', name: { en: 'yellow fish', es: 'pez amarillo' }, fish: true, h: 0.05, z: 1.5, rig: 'fish', flick: 120, bobs: 24, seed: 0.3,
+    body: '#c1a1a5', tint: 'yellow',
+    keys: [[63, 1.25, 0.30], [69, 0.875, 0.79], [73, HOLE[0], HOLE[1]], [83, HOLE[0], HOLE[1]], [87, OUT[0], OUT[1]], [98, OUT[0], OUT[1]], [106, 1.25, 0.35], [106, 1.25, 0.30]] },
+
   // Ambient, at the left where the strip may cover them.
   // The jellyfish wanders the left third of the water, top to bottom, the same in
   // every loop, and keeps clear of whatever a moment is about (check.mjs proves it).
@@ -280,9 +369,18 @@ export const ACTORS = [
         [60, 0.36, 0.93], [72, 0.52, 0.93], [75, 0.52, 0.93], [87, 0.36, 0.93], [90, 0.36, 0.93], [98, 0.52, 0.93], [100, 0.52, 0.93], [107, 0.36, 0.93]] },
       hide: { period: LOOP, depth: [[0, 5.5], [64.5, 0.5], [85.5, 5.5]],
       keys: [[0, 0.36, 0.93], [9, 0.36, 0.93], [13, 0.417, 0.93], [31, 0.417, 0.93], [34.5, 0.487, 0.90], [39.5, 0.417, 0.79], [49, 0.417, 0.79], [54, 0.499, 0.89], [64.5, 0.499, 0.89],
-        [70, 0.417, 0.86], [80, 0.417, 0.86], [85, 0.499, 0.89], [86, 0.499, 0.89], [98, 0.36, 0.93], [117, 0.36, 0.93]] } } },
+        [70, 0.417, 0.86], [80, 0.417, 0.86], [85, 0.499, 0.89], [86, 0.499, 0.89], [98, 0.36, 0.93], [117, 0.36, 0.93]] },
+      // The cove: from its spot in front of the cave it walks to stand under the arch
+      // (40–48), stays there while the shells are looked at, then climbs on to the
+      // flat rock (72–80) and goes home. The flat rock stands a little in front of the arch's foot
+      // and the cave's, so the three read as one run of rock.
+      rocks: { period: LOOP, keys: [[0, 0.53, 0.93], [24, 0.53, 0.93], [35, 0.385, 0.93], [39, ARCH_X, 0.885], [58, ARCH_X, 0.885], [61, 0.385, 0.93], [66, 0.46, 0.93], [71, LEDGE[0], LEDGE[1]], [80, LEDGE[0], LEDGE[1]],
+        [84, 0.52, 0.93], [86, 0.53, 0.93]] },
+      // The shipwreck: from its spot in front of the ship it walks to stand next to
+      // the anchor (16–24), and home again.
+      ship: { period: LOOP, keys: [[0, 0.52, 0.95], [5, 0.52, 0.95], [14, BESIDE[0], BESIDE[1]], [25, BESIDE[0], BESIDE[1]], [34, 0.52, 0.95]] } } },
   { id: 'starfish', pic: 'starfish', name: { en: 'starfish', es: 'estrella de mar' }, h: 0.075, z: 2, rig: 'still', turn: false, foot: true,
-    keys: [[0, 0.64, 0.955]] },
+    keys: [[0, 0.64, 0.955]], also: { rocks: { keys: [[0, 0.215, 0.965]] }, ship: { keys: [[0, 0.215, 0.965]] } } },
 ]
 
 // The cast of loop number `loop` for these settings: only the first n clownfish,
@@ -325,23 +423,62 @@ export function tintOf(a, s, loop) {
 // and stands right of where the turtle and shark hold for over and under.
 export const SCENERY = [
   { id: 'rock', pic: 'rock', x: 0.065, base: SAND + 0.035, h: 0.12, z: 1 },
-  { id: 'weed-left', kind: 'weed', x: 0.21, base: SAND + 0.02, w: 0.06, h: 0.32, z: 1, blades: 3, sway: 20, seed: 0.1 },
-  { id: 'weed-mid', kind: 'weed', x: 0.225, base: SAND + 0.02, w: 0.04, h: 0.15, z: 1, blades: 2, sway: 15, seed: 0.5 },
-  { id: 'weed-right', kind: 'weed', x: 0.255, base: SAND + 0.02, w: 0.05, h: 0.24, z: 1, blades: 3, sway: 20, seed: 0.8 },
-  { id: 'branch', pic: 'branch', x: 0.305, base: SAND + 0.03, h: 0.17, z: 1 },
-  { id: 'scallop', pic: 'scallop', x: 0.30, base: 0.955, h: 0.065, z: 1 },
-  { id: 'chest', pic: 'chest', name: { en: 'chest', es: 'cofre' }, x: 0.417, base: SAND + 0.04, h: 0.09, z: 1, among: true },
-  { id: 'arch', pic: 'arch', name: { en: 'arch', es: 'arco' }, x: 0.63, base: SAND + 0.035, h: 0.20, z: 1.8, among: true },
-  { id: 'brain', pic: 'brain', x: 0.955, base: SAND + 0.035, h: 0.10, z: 1 },
-  { id: 'anemone', pic: 'anemone', x: ANEMONE, base: SAND + 0.03, h: 0.17, z: 4, sway: 24, amp: 0.012, seed: 0.3 },
+  { id: 'weed-left', at: 'reef', kind: 'weed', x: 0.21, base: SAND + 0.02, w: 0.06, h: 0.32, z: 1, blades: 3, sway: 20, seed: 0.1 },
+  { id: 'weed-mid', at: 'reef', kind: 'weed', x: 0.225, base: SAND + 0.02, w: 0.04, h: 0.15, z: 1, blades: 2, sway: 15, seed: 0.5 },
+  { id: 'weed-right', at: 'reef', kind: 'weed', x: 0.255, base: SAND + 0.02, w: 0.05, h: 0.24, z: 1, blades: 3, sway: 20, seed: 0.8 },
+  { id: 'branch', at: 'reef', pic: 'branch', x: 0.305, base: SAND + 0.03, h: 0.17, z: 1 },
+  { id: 'scallop', at: 'reef', pic: 'scallop', x: 0.30, base: 0.955, h: 0.065, z: 1 },
+  { id: 'chest', at: 'reef', pic: 'chest', name: { en: 'chest', es: 'cofre' }, x: 0.417, base: SAND + 0.04, h: 0.09, z: 1, among: true },
+  { id: 'arch', at: 'reef', pic: 'arch', name: { en: 'arch', es: 'arco' }, x: 0.63, base: SAND + 0.035, h: 0.20, z: 1.8, among: true },
+  { id: 'brain', at: 'reef', pic: 'brain', x: 0.955, base: SAND + 0.035, h: 0.10, z: 1 },
+  { id: 'anemone', at: 'reef', pic: 'anemone', x: ANEMONE, base: SAND + 0.03, h: 0.17, z: 4, sway: 24, amp: 0.012, seed: 0.3 },
   { id: 'weed-front', kind: 'weed', x: 0.02, base: 1.03, w: 0.07, h: 0.44, z: 8, blades: 3, sway: 15, seed: 0.2 },
+
+  // ---- The cove, left to right: seaweed at the left, where the strip may cover it;
+  // then an arch big enough to stand under, a flat rock to stand on, a cave, a tall coral and
+  // a short one (one picture at two heights), and the anemone. Three shells (one
+  // picture at three sizes) lie in a row on the sand in front. The cave's mouth is a
+  // hole in its picture: the page fills it `dark`, at `back`, so a small fish can be
+  // drawn between the dark and the rock: in the cave.
+  { id: 'weed-left', at: 'cove', kind: 'weed', x: 0.10, base: SAND + 0.02, w: 0.06, h: 0.30, z: 0.9, blades: 3, sway: 20, seed: 0.1 },
+  { id: 'weed-right', at: 'cove', kind: 'weed', x: 0.135, base: SAND + 0.02, w: 0.05, h: 0.20, z: 0.9, blades: 2, sway: 15, seed: 0.6 },
+  { id: 'arch', at: 'cove', pic: 'arch', name: { en: 'arch', es: 'arco' }, x: ARCH_X, base: SAND + 0.035, h: 0.26, z: 1.8, among: true },
+  { id: 'ledge', at: 'cove', pic: 'ledge', name: { en: 'rock', es: 'roca' }, x: LEDGE[0], base: SAND + 0.035, h: LEDGE_H, z: 2 },
+  { id: 'cave', at: 'cove', pic: 'cave', name: { en: 'cave', es: 'cueva' }, x: CAVE[0], base: SAND + 0.035, h: 0.21, z: 1.8, among: true, dark: '#6b4423', back: 1.2 },
+  { id: 'coral-tall', at: 'cove', pic: 'branch', name: { en: 'tall coral', es: 'coral alto' }, x: 0.769, base: SAND + 0.035, h: 0.17, z: 1 },
+  { id: 'coral-short', at: 'cove', pic: 'branch', name: { en: 'short coral', es: 'coral bajo' }, x: 0.845, base: SAND + 0.035, h: 0.08, z: 1 },
+  { id: 'anemone', at: 'cove', pic: 'anemone', x: 0.9345, base: SAND + 0.03, h: 0.14, z: 4, sway: 24, amp: 0.010, seed: 0.3 },
+  { id: 'shell-small', at: 'cove', pic: 'scallop', name: { en: 'small shell', es: 'concha pequeña' }, x: 0.62, base: 0.98, h: 0.045, z: 6 },
+  { id: 'shell-medium', at: 'cove', pic: 'scallop', name: { en: 'medium shell', es: 'concha mediana' }, x: 0.69, base: 0.98, h: 0.07, z: 6 },
+  { id: 'shell-big', at: 'cove', pic: 'scallop', name: { en: 'big shell', es: 'concha grande' }, x: 0.78, base: 0.98, h: 0.105, z: 6 },
+
+  // ---- The shipwreck, left to right: seaweed at the left; an anchor with open water
+  // all round it; the ship, with three round windows and a hole in its hull; and the
+  // anemone. The windows and the hole are holes in the picture: the page fills them
+  // `dark`, at `back`, so a small fish can be drawn between the dark and the planks:
+  // inside the ship. `mouth` is the clear rectangle in the hole (shares of the drawing).
+  { id: 'weed-left', at: 'wreck', kind: 'weed', x: 0.10, base: SAND + 0.02, w: 0.06, h: 0.30, z: 0.9, blades: 3, sway: 20, seed: 0.1 },
+  { id: 'weed-right', at: 'wreck', kind: 'weed', x: 0.135, base: SAND + 0.02, w: 0.05, h: 0.20, z: 0.9, blades: 2, sway: 15, seed: 0.6 },
+  { id: 'anchor', at: 'wreck', pic: 'anchor', name: { en: 'anchor', es: 'ancla' }, x: ANCHOR.x, base: ANCHOR.base, h: ANCHOR.h, z: 2, among: true },
+  { id: 'ship', at: 'wreck', pic: 'ship', name: { en: 'ship', es: 'barco' }, x: SHIP.x, base: SAND + 0.035, h: SHIP.h, z: 1.8, among: true, dark: '#5a3a1e', back: 1.2, mouth: SHIP.mouth },
+  { id: 'anemone', at: 'wreck', pic: 'anemone', x: 0.9345, base: SAND + 0.03, h: 0.14, z: 4, sway: 24, amp: 0.010, seed: 0.3 },
+  { id: 'scallop', at: 'wreck', pic: 'scallop', x: 0.70, base: 0.985, h: 0.055, z: 6 },
 ]
+// The sea floor of a place: its own pieces, and those with no `at`, which are in every place.
+export const sceneryOf = (place) => SCENERY.filter((o) => !o.at || o.at === place)
+export const sceneryAt = (s, n = 0) => sceneryOf(placeAt(s, n))
 
 // Bubbles rising from the chest, the arch and the brain coral; `per` is bubbles per loop.
 export const STREAMS = [
-  { x: 0.417, y: SAND - 0.03, per: 24, rise: 0.06, r: 0.011, seed: 1 },
-  { x: 0.63, y: SAND - 0.13, per: 12, rise: 0.05, r: 0.007, seed: 2 },
-  { x: 0.955, y: SAND - 0.05, per: 15, rise: 0.05, r: 0.007, seed: 3 },
+  { at: 'reef', x: 0.417, y: SAND - 0.03, per: 24, rise: 0.06, r: 0.011, seed: 1 },
+  { at: 'reef', x: 0.63, y: SAND - 0.13, per: 12, rise: 0.05, r: 0.007, seed: 2 },
+  { at: 'reef', x: 0.955, y: SAND - 0.05, per: 15, rise: 0.05, r: 0.007, seed: 3 },
+  // the cove: from the arch's top and the cave's
+  { at: 'cove', x: ARCH_X, y: SAND - 0.20, per: 12, rise: 0.05, r: 0.007, seed: 4 },
+  { at: 'cove', x: CAVE[0], y: SAND - 0.16, per: 20, rise: 0.055, r: 0.009, seed: 5 },
+  // the shipwreck: from the ship's middle window and from the top of its mast
+  { at: 'wreck', x: SHIP.x - 0.188 * SHIP.w, y: SAND + 0.035 - 0.315 * SHIP.h, per: 20, rise: 0.055, r: 0.009, seed: 6 },
+  { at: 'wreck', x: SHIP.x + 0.06 * SHIP.w, y: SAND + 0.035 - SHIP.h, per: 10, rise: 0.05, r: 0.007, seed: 7 },
 ]
 
 // ---- The question moments. `test` is what check.mjs proves for the whole moment;
@@ -363,6 +500,7 @@ const BIG_LITTLE = { en: 'Is the pufferfish big or little?', es: '¿El pez globo
 const UP_DOWN = { en: 'Is the submarine going up or down?', es: '¿El submarino sube o baja?' }
 const WHERE_CRAB = { en: 'Where is the crab?', es: '¿Dónde está el cangrejo?' }
 const OVER_UNDER = { en: 'Is the turtle over or under the shark?', es: '¿La tortuga está encima o debajo del tiburón?' }
+const IN_OUT = { en: 'Is the fish inside or outside the ship?', es: '¿El pez está dentro o fuera del barco?' }
 const made = (kind, askEn, askEs) => (wordEn, wordEs, sayEn, sayEs, start) => ({
   word: { en: wordEn, es: wordEs }, say: { en: `The fish make ${sayEn}.`, es: `Los peces forman ${sayEs}.` }, start,
   ask: { en: askEn, es: askEs }, answer: { en: sayEn, es: sayEs } })
@@ -477,6 +615,41 @@ export const MOMENTS = [
     word: { en: 'red', es: 'rojo' }, say: { en: 'The crab is red.', es: 'El cangrejo es rojo.' }, start: START.like,
     ask: { en: 'What colour is the crab?', es: '¿De qué color es el cangrejo?' }, answer: { en: 'red', es: 'rojo' } },
 
+  // ---- The cove, Rocks and shells: what the sea floor is like, and where things are.
+  { id: 'tall', in: 'rocks', from: 16, to: 24, test: ['taller', 'coral-tall', 'coral-short'],
+    word: { en: 'tall, short', es: 'alto, bajo' }, say: { en: 'One coral is tall. One coral is short.', es: 'Un coral es alto. Un coral es bajo.' }, start: START.see,
+    ask: { en: 'One coral is tall. What is the other?', es: 'Un coral es alto. ¿Cómo es el otro?' }, answer: { en: 'short', es: 'bajo' } },
+  { id: 'beneath', in: 'rocks', from: 40, to: 48, test: ['under', 'crab', 'arch'],
+    word: { en: 'under', es: 'debajo de' }, say: { en: 'The crab is under the arch.', es: 'El cangrejo está debajo del arco.' }, start: START.look,
+    ask: WHERE_CRAB, answer: { en: 'under the arch', es: 'debajo del arco' } },
+  { id: 'sizes', in: 'rocks', from: 52, to: 60, test: ['sizes', 'shell-small', 'shell-medium', 'shell-big'],
+    word: { en: 'small, medium, big', es: 'pequeña, mediana, grande' },
+    say: { en: 'A small shell, a medium shell and a big shell.', es: 'Una concha pequeña, una mediana y una grande.' }, start: START.see,
+    ask: { en: 'Which shell is the biggest?', es: '¿Qué concha es la más grande?' }, answer: { en: 'the one on the right', es: 'la de la derecha' } },
+  { id: 'ledge', in: 'rocks', from: 72, to: 80, test: ['on', 'crab', 'ledge'],
+    word: { en: 'on', es: 'sobre' }, say: { en: 'The crab is on the rock.', es: 'El cangrejo está sobre la roca.' }, start: START.uhoh,
+    ask: WHERE_CRAB, answer: { en: 'on the rock', es: 'sobre la roca' } },
+  { id: 'cave', in: 'rocks', from: 90, to: 98, test: ['within', 'peek', 'cave'],
+    word: { en: 'in', es: 'dentro de' }, say: { en: 'The fish is in the cave.', es: 'El pez está dentro de la cueva.' }, start: START.wonder,
+    ask: { en: 'Where is the fish?', es: '¿Dónde está el pez?' }, answer: { en: 'in the cave', es: 'dentro de la cueva' } },
+
+  // ---- The shipwreck, The sunken ship: where things are, round a ship and its anchor.
+  { id: 'beside', in: 'ship', from: 16, to: 24, test: ['beside', 'crab', 'anchor'],
+    word: { en: 'next to', es: 'al lado de' }, say: { en: 'The crab is next to the anchor.', es: 'El cangrejo está al lado del ancla.' }, start: START.see,
+    ask: WHERE_CRAB, answer: { en: 'next to the anchor', es: 'al lado del ancla' } },
+  { id: 'high', in: 'ship', from: 30, to: 38, test: ['higher', 'high', 'low'],
+    word: { en: 'high, low', es: 'arriba, abajo' }, say: { en: 'One fish is up high. One fish is down low.', es: 'Un pez está arriba. Un pez está abajo.' }, start: START.look,
+    ask: { en: 'One fish is high. Where is the other?', es: 'Un pez está arriba. ¿Dónde está el otro?' }, answer: { en: 'low', es: 'abajo' } },
+  { id: 'around', in: 'ship', from: 48, to: 59, test: ['around', 'round', 'anchor'],
+    word: { en: 'around', es: 'alrededor de' }, say: { en: 'The fish swims around the anchor.', es: 'El pez nada alrededor del ancla.' }, start: START.think,
+    ask: { en: 'Where does the fish swim?', es: '¿Por dónde nada el pez?' }, answer: { en: 'around the anchor', es: 'alrededor del ancla' } },
+  { id: 'inside', in: 'ship', from: 74, to: 82, test: ['within', 'peep', 'ship'],
+    word: { en: 'inside', es: 'dentro' }, say: { en: 'The fish is inside the ship.', es: 'El pez está dentro del barco.' }, start: START.wonder,
+    ask: IN_OUT, answer: { en: 'inside', es: 'dentro' } },
+  { id: 'outside', in: 'ship', from: 88, to: 97, test: ['outside', 'peep', 'ship'],
+    word: { en: 'outside', es: 'fuera' }, say: { en: 'Now the fish is outside the ship.', es: 'Ahora el pez está fuera del barco.' }, start: START.look,
+    ask: IN_OUT, answer: { en: 'outside', es: 'fuera' } },
+
   // ---- A school of fish: shapes, a number and a letter.
   ...HELD.map(([shape, from, to]) => ({ id: shape, in: 'school', from, to, test: ['shape', 'butterfly', shape], ...SCHOOL_CARDS[shape] })),
 ]
@@ -487,7 +660,7 @@ export const momentAt = (t, s = DEFAULTS, loop = 0) => momentsOf(s, loop).find((
 export function subjects(m, s, loop = 0) {
   const all = cast(s, loop), out = { actors: [], reef: [] }
   for (const id of m.test.slice(1)) {
-    const a = all.filter((x) => x.id === id || x.pic === id), o = SCENERY.find((x) => x.id === id)
+    const a = all.filter((x) => x.id === id || x.pic === id), o = sceneryAt(s, loop).find((x) => x.id === id)
     out.actors.push(...a); if (o) out.reef.push(o)
   }
   return out
@@ -684,6 +857,13 @@ export function openingBox(o, m) {
   const b = sceneryBox(o, m), w = b.r - b.l
   return { l: b.l + m.hole.l * w, r: b.l + m.hole.r * w, t: b.t + m.hole.t * o.h, mid: b.t + m.hole.mid * o.h, b: b.b }
 }
+// The clear space inside a piece that something can be whole in: the `mouth` it gives
+// (a hole with the piece all round it, like the ship's), or else its opening.
+export function mouthBox(o, m) {
+  if (!o.mouth) { const h = openingBox(o, m); return { l: h.l, r: h.r, t: h.t, b: h.b } }
+  const b = sceneryBox(o, m), w = b.r - b.l
+  return { l: b.l + o.mouth.l * w, r: b.l + o.mouth.r * w, t: b.t + o.mouth.t * o.h, b: b.t + o.mouth.b * o.h }
+}
 // Where a reef piece is drawn among the actors. The ones an actor can go behind
 // (seaweed, the anemone, the chest, the arch) are at their own z; the rest are a
 // touch further back, behind every animal but the whale.
@@ -701,7 +881,7 @@ export function bubblesAt(t, s, measures, loop = 0) {
     if (y + r < SEEN.y[0]) return
     out.push({ x: x0 + 0.006 * Math.sin(TAU * (age / 2.2 + hash(b, 7))) / A, y, r })
   }
-  for (const st of STREAMS) {
+  for (const st of STREAMS.filter((x) => x.at === placeAt(s, loop))) {
     for (let b = 0; b < st.per; b++) {
       const born = (b + 0.6 * hash(b, st.seed)) * LOOP / st.per
       rise(b, st.x + 0.01 * (hash(b, st.seed + 9) - 0.5), st.y, wrap(t - born, LOOP), st.r * (0.7 + 0.6 * hash(b, st.seed + 4)), st.rise)

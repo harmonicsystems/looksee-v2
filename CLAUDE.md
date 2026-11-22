@@ -43,8 +43,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 92 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 90.1 KB now, 1.9 KB under: 60.3 at start, 16.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-22 from 84 to 92 for the aquarium's five loops and two-faced cards, and on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 94 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 93.0 KB now, 1 KB under: 60.3 at start, 20 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-22 from 92 to 94 for the aquarium's cove and shipwreck, the same day from 84 to 92 for the aquarium's five loops and two-faced cards, and on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -458,13 +458,20 @@ How Looksee, the picture library, sequence and Clip Choice fit together, and eve
 copied in from the library, is in `~/Code/picture-library/MAP.md`. `npm run tuning` there says
 whether the copies here still match.
 
-Five two-minute sea loops that take turns, to talk and ask about: Swimming past (how many, over or
+**Three places since 2026-11-22** (`S.PLACES`): the reef, whose five loops take turns; the cove
+(Rocks and shells); and the shipwreck (The sunken ship). A humpback whale passes behind Hide and
+seek. Sea ▸ Place chooses the place: its loops play in turn from the start and the sea fades in,
+since the floor changes. The Loop row lists only that place's loops and is hidden where there is
+one. A held loop decides the place. The three places cost 3 KB more (the aquarium's part is 20 KB); David raised the gate from 92 to
+94 KB for them the same day.
+
+The reef's five two-minute sea loops, to talk and ask about: Swimming past (how many, over or
 under, fast or slow, what colour), Hide and seek (place words), A school of fish (shapes, a number,
 a letter), Big and little, and One more. **It is made and proved in David's picture library** (`~/Code/picture-library/projects/aquarium`,
 where `check.mjs` proves every question true for its whole moment) and copied here by
 `npm run aquarium` (`scripts/aquarium.mjs`): `src/aquarium/` (never edit by hand; a test compares
-`scene.js` with the hash taken when the check passed) and 28 pictures as lossless WebP in
-`public/aquarium/` (2.6 MB, David's own, stored for offline use). The script runs the library's
+`scene.js` with the hash taken when the check passed) and 33 pictures as lossless WebP in
+`public/aquarium/` (3 MB, David's own, stored for offline use). The script runs the library's
 check first and copies nothing if it fails. It changes two things: picture names end `.webp`, and
 `stage.js` takes its frame sets from `frames.js` instead of a `fetch`.
 
@@ -482,7 +489,7 @@ check first and copies nothing if it fails. It changes two things: picture names
   the question face shows. Reduced motion opens it frozen.
 - **The five loops cost 7 KB (2026-11-22).** The aquarium's own part went from 9.8 to 16.8 KB,
   nearly all of it `scene.js`, which is copied and not edited here. David raised the size gate
-  from 84 to 92 KB for it; the app is 90.1 KB, so a sixth loop will not fit without asking again
+  from 84 to 92 KB for it, and to 94 for the places; the app is 93.0 KB, so another loop will not fit without asking again
   or making the scene smaller in the library.
 - **Its check does not run in Looksee's tests** (it needs the library and ImageMagick); the hash
   test stands in for it.

@@ -1,6 +1,6 @@
 <script>
-  // The aquarium: two-minute sea loops to talk and ask about, taking turns
-  // (swimming past, hide and seek, a school of fish, big and little, one more).
+  // The aquarium: two-minute sea loops to talk and ask about, in three places
+  // (the reef, whose five loops take turns; the cove; the shipwreck).
   // It is made and proved in David's picture library and copied here by
   // `npm run aquarium` (src/aquarium/, public/aquarium/); this file is only its
   // place on Looksee's stage. It is loaded the first time it is opened.
@@ -18,15 +18,25 @@
   let { s, reduced = false, key = $bindable(null) } = $props()
 
   const KEY = 'looksee-aquarium-v1'
-  const NAMES = { clownfish: 'Clownfish', sub: 'Submarine', speed: 'Speed', water: 'Water', card: 'Cards open on', loops: 'Loop' }
-  const LABEL = { 0.5: 'Slow', 1: 'Normal', light: 'Light', deep: 'Deep', each: 'New each loop', say: 'Something to say', ask: 'The question', turn: 'All in turn', ...Object.fromEntries(S.LOOPS.map((l) => [l.id, l.en])) }
+  const NAMES = { clownfish: 'Clownfish', sub: 'Submarine', speed: 'Speed', water: 'Water', card: 'Cards open on', place: 'Place', loops: 'Loop' }
+  const LABEL = { 0.5: 'Slow', 1: 'Normal', light: 'Light', deep: 'Deep', each: 'New each loop', say: 'Something to say', ask: 'The question', turn: 'All in turn', ...Object.fromEntries([...S.PLACES, ...S.LOOPS].map((l) => [l.id, l.en])) }
   let saved = {}
   try {
     saved = JSON.parse(localStorage.getItem(KEY)) || {}
   } catch {}
   let set = $state({ ...S.DEFAULTS, ...Object.fromEntries(Object.entries(saved).filter(([k, v]) => S.CHOICES[k]?.includes(v))) })
+  // A loop held on the screen says which place it is.
+  if (set.loops !== 'turn') set.place = S.placeOf(set.loops)
   function choose(k, v) {
     if (k === 'speed') rebase()
+    // Another place: its loops in turn, from the start. The floor changes, so the sea fades in.
+    if (k === 'place' && v !== set.place) {
+      set.loops = 'turn'
+      clock.base = 0
+      clock.at = performance.now()
+      shown = null
+      if (!reduced) canvas.animate({ opacity: [0, 1] }, 500)
+    }
     // Another loop: it starts where this one is in its two minutes, as loop 0.
     if (k === 'loops') {
       clock.base = at().t
@@ -161,8 +171,10 @@
   {/if}
   {#if more}
     <div class="opts">
-      {#each Object.entries(S.CHOICES) as [k, vs] (k)}
-        <div class="row" role="group" aria-label={NAMES[k]}>
+      {#each Object.entries(S.CHOICES) as [k, all] (k)}
+        <!-- Only the loops of the place showing; no row where the place has one loop. -->
+        {@const vs = k === 'loops' ? ['turn', ...S.loopsAt(set.place).map((l) => l.id)] : all}
+        <div class="row" role="group" aria-label={NAMES[k]} hidden={k === 'loops' && vs.length < 3}>
           <span>{NAMES[k]}</span>
           {#each vs as v (v)}
             {@const c = k === 'sub' && v !== 'each' && S.colourOf(v)}
@@ -189,6 +201,7 @@
   .card b { color: var(--brand); }
   .card i { font-style: normal; font-weight: 400; font-size: 0.8em; }
   .opts { bottom: 84px; padding: 12px; display: grid; gap: 8px; }
+  .row[hidden] { display: none; }
   .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .row span { min-width: 8em; font-weight: 700; }
   .row .btn { min-height: 44px; min-width: 44px; }
