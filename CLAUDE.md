@@ -43,8 +43,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 84 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 82.5 KB now, 1.5 KB under: 59.6 at start, 9.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 92 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 90.1 KB now, 1.9 KB under: 60.3 at start, 16.8 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-22 from 84 to 92 for the aquarium's five loops and two-faced cards, and on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -480,10 +480,10 @@ check first and copies nothing if it fails. It changes two things: picture names
   `looksee-aquarium-v1`, not settings, in no link). A click on the sea freezes it; Space and → do
   the same as Freeze and Next. Next goes to the next moment, or the next one with a question while
   the question face shows. Reduced motion opens it frozen.
-- **The five loops put the app over the size gate (2026-11-22): 90.1 KB against 84.** The aquarium's
-  own part went from 9.8 to 16.8 KB, nearly all of it `scene.js`, which is copied and not edited
-  here. `npm test` passes; `npm run build` fails at the gate until David raises it or the scene
-  is made smaller in the library.
+- **The five loops cost 7 KB (2026-11-22).** The aquarium's own part went from 9.8 to 16.8 KB,
+  nearly all of it `scene.js`, which is copied and not edited here. David raised the size gate
+  from 84 to 92 KB for it; the app is 90.1 KB, so a sixth loop will not fit without asking again
+  or making the scene smaller in the library.
 - **Its check does not run in Looksee's tests** (it needs the library and ImageMagick); the hash
   test stands in for it.
 
