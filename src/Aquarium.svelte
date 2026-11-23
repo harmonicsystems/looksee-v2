@@ -211,10 +211,11 @@
 <style>
   .sea { position: absolute; z-index: 2; inset: var(--bar-h) var(--inset-r) var(--inset-b) calc(var(--inset-l) - var(--under)); background: var(--stage-bg); }
   canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
-  .card { position: absolute; top: 12px; left: calc(50% + var(--under) / 2); translate: -50%; max-width: calc(92% - var(--under)); padding: 6px 18px; display: grid; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; font-family: var(--font); font-size: clamp(15px, 1.8vw, 26px); line-height: 1.25; font-weight: 700; text-align: center; cursor: pointer; }
+  /* The cue card: a thin strip of glass along the top edge, everything on one
+     line when it fits (the word, the sentence, the starter), so the sea stays in view. */
+  .card { position: absolute; top: 0; left: calc(50% + var(--under) / 2); translate: -50%; width: max-content; max-width: calc(100% - var(--under) - 24px); padding: 4px 16px 5px; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 14px; background: color-mix(in srgb, var(--surface) 72%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--ink); border: 0; border-radius: 0 0 12px 12px; font: clamp(14px, 1.35vw, 19px) / 1.3 var(--font); text-align: center; cursor: pointer; }
   .card b { color: var(--brand); }
-  .card b span, .card i span { display: inline; }
-  .card i { font-style: normal; font-weight: 400; font-size: 0.8em; }
+  .card i { font-style: normal; font-size: 0.85em; }
   .opts { position: absolute; z-index: 1; top: 0; bottom: 0; left: var(--under); width: min(276px, 100%); padding: 12px; overflow: auto; display: grid; align-content: start; gap: 14px; background: color-mix(in srgb, var(--bg) 85%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--ink); border-right: 1px solid var(--line); font-family: var(--font); }
   .row[hidden] { display: none; }
   .row { display: flex; gap: 6px; flex-wrap: wrap; }

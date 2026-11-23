@@ -484,8 +484,10 @@ check first and copies nothing if it fails. It changes two things: picture names
   word, a model sentence, a starter for the children) and the question, whose answer shows only
   when asked for. A moment with no question has only the first face. The card follows the Words
   setting, and a click on it says it.
-- **The card is kept short** (David, 2026-11-22: it covered too much of the sea): both languages
-  share a line for the word, the starter and the answer (`pair`), and the type is smaller.
+- **The card is a thin strip of glass along the top edge** (David, 2026-11-22, twice: it covered
+  the fish it was about): the word, the sentence and the starter run on one line when they fit,
+  in small regular type, frosted like the dock. Both languages share a line for the word, the
+  starter and the answer (`pair`). Keep it subtle: it is a cue for the teacher, not a slide.
 - **Sea opens as a panel beside the dock**, in the same glass, full height, one choice per row with
   its name above. It lies over the left of the sea and nothing else moves; the Loop row is last,
   so hiding it shifts nothing. Four ways out: its Close button, a click on the sea (which then
