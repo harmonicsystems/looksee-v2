@@ -358,7 +358,7 @@ export class Stage {
       cy = (a.foot ? m.box.y + m.box.h : m.box.y + m.box.h / 2) * k
     }
     let ex = 1, ey = 1
-    if (a.rig === 'jelly') { const v = Math.sin(TAU * pose.phase); ex = 1 + 0.06 * v; ey = 1 - 0.06 * v }
+    if (a.rig === 'jelly') { const v = Math.sin(TAU * pose.phase); ex = 1 - 0.06 * v; ey = 1 + 0.06 * v }   // it narrows as it lifts
     if (a.rig === 'sit') { const v = Math.sin(TAU * pose.phase); ex = 1 - 0.012 * v; ey = 1 + 0.022 * v }
     g.save()
     g.translate(this.X(pose.x), this.Y(pose.y))
@@ -392,7 +392,9 @@ export class Stage {
       // the next, swinging further toward their ends, the swing running down them.
       const top = Math.round(m.box.y * k), bottom = Math.round((m.box.y + m.box.h) * k), split = Math.round(top + a.hang * (bottom - top))
       const ph = S.wrap((a.sway || 30) * t / S.LOOP + (a.seed || 0), 1), amp = 0.05 * m.box.w * k
-      const off = (u) => amp * u * Math.sin(TAU * ph - 2.2 * u)
+      // They trail behind the way it is going.
+      const lean = Math.max(-0.3, Math.min(0.3, 12 * pose.vx)) * m.box.w * k
+      const off = (u) => amp * u * Math.sin(TAU * ph - 2.2 * u) - lean * u * u
       g.drawImage(c, 0, 0, c.width, split, -cx, -cy, c.width, split)
       const N = 10
       for (let b = 0; b < N; b++) {

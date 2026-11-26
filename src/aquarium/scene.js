@@ -268,6 +268,10 @@ const roundKeys = () => {
 // (the crab's steps), sit and still. Rates are cycles per loop. An actor with a
 // `body` colour can be drawn in another (`tint`: a colour id, or a function of the
 // settings and the loop).
+// The jellyfish's route in one loop: ten places (x, y) at these seconds, between the
+// stretch at the left that every loop shares (108 s round to 12 s).
+const wander = (v) => { const p = v.split(',').map(Number)
+  return [[0, 0.15, 0.46], [6, 0.12, 0.36], [12, 0.17, 0.27], ...[20, 28, 37, 45, 54, 62, 71, 79, 88, 97].map((t, i) => [t, p[2 * i], p[2 * i + 1]]), [108, 0.34, 0.56], [114, 0.24, 0.52]] }
 export const ACTORS = [
   ...LAPS.map((_, i) => ({ id: `clown${i + 1}`, pic: 'clown', name: { en: 'clownfish', es: 'pez payaso' }, fish: true, n: i + 1,
     h: 0.11, z: 5, rig: 'fish', flick: 150 + 12 * i, bobs: 22 + i, seed: i * 0.23, keys: clownKeys(i), also: { hide: clownHide(i), more: clownMore(i), rocks: { keys: clownKeys(i, COVE_SPOTS, COVE_LAPS) }, ship: { keys: clownKeys(i, WRECK_SPOTS, COVE_LAPS) } } })),
@@ -363,11 +367,21 @@ export const ACTORS = [
     keys: [[63, 1.25, 0.30], [69, 0.875, 0.79], [73, HOLE[0], HOLE[1]], [83, HOLE[0], HOLE[1]], [87, OUT[0], OUT[1]], [98, OUT[0], OUT[1]], [106, 1.25, 0.35], [106, 1.25, 0.30]] },
 
   // Ambient, at the left where the strip may cover them.
-  // The jellyfish wanders the left third of the water, top to bottom, the same in
-  // every loop, and keeps clear of whatever a moment is about (check.mjs proves it).
-  // Its bell pulses and its strands (below `hang` of its height) sway as they trail.
+  // The jellyfish wanders the whole sea on a planned route, its own in each loop, so
+  // it can go round whatever that loop's moments are about (check.mjs proves it
+  // never touches them). It is home at the left where loops join, the same in all.
+  // Behind the arch, the cave and the ship; in front of the seaweed and the coral.
+  // Its bell pulses and lifts it, and its strands (below `hang` of its height) trail.
   { id: 'jelly', pic: 'jelly', name: { en: 'jellyfish', es: 'medusa' }, h: 0.20, z: 1.5, rig: 'jelly', turn: false, pulse: 30, sway: 36, hang: 0.44, seed: 0,
-    keys: [[0, 0.13, 0.58], [16, 0.22, 0.24], [34, 0.27, 0.42], [50, 0.12, 0.20], [66, 0.10, 0.46], [82, 0.14, 0.60], [100, 0.17, 0.34]] },
+    keys: wander('.16,.22,.23,.35,.37,.51,.62,.65,.84,.65,.91,.65,.8,.4,.92,.18,.88,.32,.71,.5'),
+    also: Object.fromEntries(Object.entries({
+      hide: '.38,.24,.58,.24,.83,.48,.76,.6,.58,.51,.55,.52,.74,.66,.91,.57,.8,.46,.65,.59',
+      school: '.15,.49,.25,.35,.1,.5,.24,.39,.12,.64,.21,.6,.28,.42,.39,.42,.21,.23,.11,.27',
+      size: '.35,.28,.6,.19,.79,.4,.62,.31,.73,.5,.86,.62,.74,.56,.92,.44,.78,.68,.65,.69',
+      more: '.34,.37,.47,.34,.51,.17,.44,.22,.25,.45,.46,.51,.66,.59,.81,.71,.64,.71,.5,.7',
+      rocks: '.39,.23,.64,.3,.85,.27,.68,.48,.89,.7,.74,.59,.92,.41,.81,.34,.65,.3,.59,.35',
+      ship: '.37,.39,.53,.61,.8,.64,.9,.61,.74,.66,.58,.56,.38,.61,.24,.63,.17,.56,.11,.62',
+    }).map(([id, v]) => [id, { keys: wander(v) }])) },
   // The octopus's eight arms each swing from their root, on their own rhythm (see
   // splitArms and armAngle at the foot of this file).
   { id: 'octopus', pic: 'octopus', name: { en: 'octopus', es: 'pulpo' }, h: 0.15, z: 2, rig: 'sit', turn: false, foot: true, seed: 0.7,
@@ -775,7 +789,10 @@ export function poseAt(a, t) {
     // A diver noses down and up, so a frozen screen still shows which way it goes.
     if (a.dives) rot += right * clamp(Math.atan2(k.vy, Math.abs(k.vx) * A) * 0.6, -0.3, 0.3)
   } else if (a.rig === 'jelly') {
+    // Each pulse of the bell lifts it quickly; it sinks slowly until the next.
     phase = cyc(a.pulse)
+    phase += 0.09 * Math.sin(TAU * phase)
+    y -= 0.012 * Math.sin(TAU * phase)
   } else if (a.rig === 'walk') {
     phase = cyc(a.steps)
     moving = clamp(Math.abs(k.vx) * A / 0.02, 0, 1)
