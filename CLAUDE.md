@@ -43,8 +43,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 94 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 93.6 KB now, 0.4 KB under: 60.3 at start, 20.5 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-22 from 92 to 94 for the aquarium's cove and shipwreck, the same day from 84 to 92 for the aquarium's five loops and two-faced cards, and on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 95 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 94.1 KB now, 0.9 KB under: 60.4 at start, 20.5 for the aquarium when it is opened, the rest the service worker. David raised it on 2026-11-23 from 94 to 95 for the wandering jellyfish and the Water music playlist, on 2026-11-22 from 92 to 94 for the aquarium's cove and shipwreck, the same day from 84 to 92 for the aquarium's five loops and two-faced cards, and on 2026-11-20 from 72 to 84 for the dock and the aquarium; before that on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -478,6 +478,11 @@ check first and copies nothing if it fails. It changes two things: picture names
 - **Memory (2026-11-22):** the library's `stage.js` no longer keeps a second copy of every
   picture's pixels after loading (about 31 MB, measured there). Not done, David's call: halving
   the four biggest pictures (about 13 MB more) and a smaller canvas.
+- **The jellyfish wanders the whole sea (2026-11-23).** David asked for it to visit corners and
+  midpoints at random; a random path cannot be proved clear of what a question is about, so it has
+  a planned route for each loop, the same every time (the library's `wander()`), and its bell
+  lifts it with each pulse. In "A school of fish" it keeps to the left, and in some loops it
+  passes behind the clownfish at their anemone.
 - `Aquarium.svelte` is its place on the stage, **loaded the first time it is opened** (the only
   `import()` in the app). Leaving it cancels its frame loop.
 - **Each moment has a card with two faces** (`S.tell(moment, set, loop)`): something to say (the
@@ -500,7 +505,7 @@ check first and copies nothing if it fails. It changes two things: picture names
   the question face shows. Reduced motion opens it frozen.
 - **The five loops cost 7 KB (2026-11-22).** The aquarium's own part went from 9.8 to 16.8 KB,
   nearly all of it `scene.js`, which is copied and not edited here. David raised the size gate
-  from 84 to 92 KB for it, and to 94 for the places; the app is 93.6 KB, so another loop will not fit without asking again
+  from 84 to 92 KB for it, and to 94 for the places; the app is now 94.1 of 95 KB, so another loop will not fit without asking again
   or making the scene smaller in the library.
 - **Its check does not run in Looksee's tests** (it needs the library and ImageMagick); the hash
   test stands in for it.
@@ -713,6 +718,14 @@ only when Settings ▸ Music is on (off for a new visitor). Asked for on 2026-11
   quietest. Only these: Clair de lune and The Swan had no clean PD/CC0 piano recording, and
   Brahms's Lullaby on Commons names no performer. A recording someone else made needs David's
   OK before it is downloaded.
+- **Water music** (two tracks, 4 minutes, 2 MB; David said yes to both on 2026-11-23): the opening
+  of Saint-Saëns's "Aquarium", made by `scripts/music.mjs` (its four bars of melody over the
+  pianos' rising runs, four times through; a tune there may now have sharps and `arp` runs in
+  place of chords), and Mendelssohn's Venetian Gondola Song, Op. 30 No. 6 (Membeth, CC0 on
+  Commons). No recording of Aquarium on Commons is PD or CC0, and the notes after its opening
+  were not to hand, so it is the opening only. Looked at and left out: Smetana's Vltava
+  (Musopen, CC0) and Debussy's La mer (US Air Force Band, PD) swing about 20 LU between soft
+  and loud, too much for a quiet room; The Blue Danube and The Hebrides are not quiet.
 - **Offline:** the files are not precached (`globIgnores` has `music/**`). Settings ▸ Music has
   "Save for this device", which puts every track in Cache Storage (`looksee-music`, with
   `cache.add`: the site's own files, so no `fetch` and nothing outside). A saved track is played

@@ -42,6 +42,14 @@ nocturne,Chopin: Nocturne in E-flat
 cello,Bach: Prelude from Cello Suite No. 1
 morning,Grieg: Morning Mood
 asleep,Schumann: Child Falling Asleep`)
+  },
+  {
+    id: 'water',
+    label: 'Water music',
+    emoji: '🌊',
+    credit: 'A music box (ours, CC0) and a CC0 recording from Wikimedia Commons',
+    tracks: tracks(`aquarium,Saint-Saëns: Aquarium
+gondola,Mendelssohn: Venetian Gondola Song`)
   }
 ]
 

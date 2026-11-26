@@ -28,8 +28,9 @@ Background music (public/music/)
 --------------------------------
 Nursery tunes: Twinkle Twinkle Little Star, Mary Had a Little Lamb, Row Row
 Row Your Boat, Frère Jacques, London Bridge, Old MacDonald, Hot Cross Buns,
-Au Clair de la Lune, and Ode to Joy (Beethoven). The melodies are in the
-public domain. These recordings were made for Looksee by
+Au Clair de la Lune, and Ode to Joy (Beethoven); and, in Water music,
+aquarium.m4a, the opening of "Aquarium" from Saint-Saëns's The Carnival of
+the Animals. The melodies are in the public domain. These recordings were made for Looksee by
 scripts/music.mjs, a music-box sound written in code, and are dedicated to
 the public domain under CC0 1.0.
   https://creativecommons.org/publicdomain/zero/1.0/
@@ -61,3 +62,10 @@ compositions are all in the public domain.
 - asleep.m4a: Schumann, Child Falling Asleep (Scenes from Childhood, Op. 15
   No. 12). Musopen. Public domain.
   https://commons.wikimedia.org/wiki/File:Robert_Schumann_-_scenes_from_childhood,_op._15_-_xii._child_falling_asleep.ogg
+
+Water music: aquarium.m4a is a music box made for Looksee (above). The
+other is a recording from Wikimedia Commons, marked there CC0, made mono
+and AAC for Looksee. The composition is in the public domain.
+- gondola.m4a: Mendelssohn, Venetian Gondola Song (Songs Without Words,
+  Op. 30 No. 6). Membeth, piano. CC0.
+  https://commons.wikimedia.org/wiki/File:Mendelssohn.Venetianisches.Gondellied.opus.30.6.ogg

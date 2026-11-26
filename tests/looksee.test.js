@@ -1131,8 +1131,10 @@ describe('music', () => {
   })
   it('credits every recording it did not make, by file, with its source', () => {
     const notice = readFileSync(at('public/NOTICE.txt'), 'utf8')
+    // A tune written out in scripts/music.mjs is ours, in whichever playlist.
+    const ours = readFileSync(at('scripts/music.mjs'), 'utf8')
     for (const p of PLAYLISTS.filter((p) => !/made for Looksee/.test(p.credit)))
-      for (const t of p.tracks) expect(notice, t.file).toMatch(new RegExp(`- ${t.file}\\.m4a: [^]*?https://commons\\.wikimedia\\.org/`))
+      for (const t of p.tracks.filter((t) => !ours.includes(`\n  ${t.file}: {`))) expect(notice, t.file).toMatch(new RegExp(`- ${t.file}\\.m4a: [^]*?https://commons\\.wikimedia\\.org/`))
   })
   it('never splits a title on a comma', () => {
     for (const p of PLAYLISTS) for (const t of p.tracks) expect(t.file, t.title).toMatch(/^[a-z0-9-]+$/)

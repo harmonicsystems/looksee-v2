@@ -19,7 +19,10 @@ const force = process.argv.includes('--force')
 const RATE = 44100
 
 // A tune: `bpm`, then `notes` as "C4:1 D4:0.5 -:1" (pitch and beats; "-" is
-// a rest) and `chords` as one chord name per `per` beats ("C F G").
+// a rest) and `chords` as one chord name per `per` beats ("C F G"). A pitch
+// may be sharp ("D#5"). In place of `chords` a tune may have `arp`: a run of
+// notes for each `per` beats, played rising and evenly across them, with
+// `times` (how often the tune plays, 2 if not given) and `end`, its last run.
 const TUNES = {
   twinkle: {
     bpm: 72, per: 2,
@@ -61,6 +64,16 @@ const TUNES = {
     notes: 'C4:1 C4:1 C4:1 D4:1 E4:2 D4:2 C4:1 E4:1 D4:1 D4:1 C4:4 C4:1 C4:1 C4:1 D4:1 E4:2 D4:2 C4:1 E4:1 D4:1 D4:1 C4:4 D4:1 D4:1 D4:1 D4:1 A3:2 A3:2 D4:1 C4:1 B3:1 A3:1 G3:4 C4:1 C4:1 C4:1 D4:1 E4:2 D4:2 C4:1 E4:1 D4:1 D4:1 C4:4',
     chords: 'C C C C C C C C G Dm G G C C C C'
   },
+  // The opening of "Aquarium" from Saint-Saëns's The Carnival of the Animals
+  // (1886): its four bars of melody over the two pianos' rising runs.
+  aquarium: {
+    bpm: 63, per: 1, times: 4,
+    notes: 'E5:1 D#5:1 E5:1 D#5:1 E5:1 A4:3 E5:1 D#5:1 E5:1 D#5:1 E5:1 A4:3',
+    arp: 'a b a b a d d d a b a b a D D D'.split(' ').map((k) => ({
+      a: 'A3 E4 A4 C5 E5 C6', b: 'A3 F4 A4 B4 D#5 B5', d: 'D4 A4 D5 F5 A5 F6', D: 'D4 A4 D5 F#5 A5 F#6'
+    })[k]),
+    end: 'A3 E4 A4 C5 E5 A5'
+  },
   joy: {
     bpm: 76, per: 4,
     notes: 'E4:1 E4:1 F4:1 G4:1 G4:1 F4:1 E4:1 D4:1 C4:1 C4:1 D4:1 E4:1 E4:1.5 D4:0.5 D4:2 E4:1 E4:1 F4:1 G4:1 G4:1 F4:1 E4:1 D4:1 C4:1 C4:1 D4:1 E4:1 D4:1.5 C4:0.5 C4:2',
@@ -70,7 +83,7 @@ const TUNES = {
 
 const CHORDS = { C: ['C3', 'E3', 'G3'], F: ['F2', 'A2', 'C3'], G: ['G2', 'B2', 'D3'], Dm: ['D3', 'F3', 'A3'] }
 const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
-const hz = (n) => 440 * 2 ** ((SEMI[n[0]] + (+n.at(-1) + 1) * 12 - 69) / 12)
+const hz = (n) => 440 * 2 ** ((SEMI[n[0]] + (n[1] === '#') + (+n.at(-1) + 1) * 12 - 69) / 12)
 
 // A soft music box: a sine with a little of its second and third
 // harmonics, a quick start and a long, gentle fade.
@@ -100,7 +113,8 @@ function pad(buf, at, notes, len, amp) {
 
 // The tune twice (the second time an octave higher, more softly), then its
 // last chord held.
-function render({ bpm, per, beat = 1, notes, chords }) {
+function render({ bpm, per, beat = 1, notes, chords, arp, times = 2, end }) {
+  if (arp) return ripple({ bpm, per, notes, arp, times, end })
   const sec = (60 / bpm) * beat
   const ns = notes.split(' ').map((x) => x.split(':')).map(([p, b]) => [p, +b])
   const beats = ns.reduce((a, [, b]) => a + b, 0)
@@ -118,6 +132,31 @@ function render({ bpm, per, beat = 1, notes, chords }) {
     cs.forEach((c, i) => pad(buf, t0 + i * per * sec, CHORDS[c], per * sec + 0.3, 0.035))
   }
   pad(buf, 1 + once * 2, CHORDS[cs.at(-1)], 3.5, 0.035)
+  return buf
+}
+
+// A tune over rising runs: every other time through, the melody is an octave
+// higher and softer. It closes on `end`, played slowly and left to ring.
+function ripple({ bpm, per, notes, arp, times, end }) {
+  const sec = 60 / bpm
+  const ns = notes.split(' ').map((x) => x.split(':')).map(([p, b]) => [p, +b])
+  const once = ns.reduce((a, [, b]) => a + b, 0) * sec
+  const last = end.split(' ')
+  const buf = new Float32Array(Math.ceil((1 + once * times + last.length * 0.3 + 5) * RATE))
+  for (let round = 0; round < times; round++) {
+    const t0 = 1 + round * once
+    const up = round % 2
+    let at = t0
+    for (const [p, b] of ns) {
+      if (p !== '-') tone(buf, at, hz(p) * (up ? 2 : 1), b * sec + 2, up ? 0.15 : 0.22)
+      at += b * sec
+    }
+    arp.forEach((run, i) => {
+      const r = run.split(' ')
+      r.forEach((n, j) => tone(buf, t0 + (i + j / r.length) * per * sec, hz(n), 1.4, 0.05))
+    })
+  }
+  last.forEach((n, j) => tone(buf, 1 + once * times + j * 0.3, hz(n), 4.5, 0.09))
   return buf
 }
 
